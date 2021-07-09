@@ -8,6 +8,8 @@ from IPython.display import HTML
 import doMail
 import matplotlib.pyplot as plt
 import csv
+import schedule
+import time
 
 
 # Get the desired data from the api
@@ -48,16 +50,6 @@ def formatData(data):
         day3.strftime("%m/%d/%y"),
     ]
 
-    #     html_string = """
-    # <html>
-    #   <head><title>HTML Pandas Dataframe with CSS</title></head>
-    #   <link rel="stylesheet" type="text/css" href="df_style.css"/>
-    #   <body>
-    #     {df}
-    #   </body>
-    # </html>.
-    # """
-
     df = pd.DataFrame(
         data,
         columns=[
@@ -94,6 +86,7 @@ def formatData(data):
     )
     df = df.transpose()
     df.style
+
     return df
 
 
@@ -166,15 +159,12 @@ if __name__ == "__main__":
     data = retrieveData()
     data = parseData(data)
     # data = saveAsCsv(data)
-    peak1, peak2, peak3, hourPeak1, hourPeak2, hourPeak3 = getPeakData(data)
     df = formatData(data)
+    peak1, peak2, peak3, hourPeak1, hourPeak2, hourPeak3 = getPeakData(data)
     createLineChart(df)
     body = """\
     <html>
     <head></head>
-    <style>
-
-    </style>
     <body>
         <p style="font-family: Verdana; font-size: 20px;">
             This is a hourly systemwide demand forecast for today and the next two days. This is the expected amount of electricity to be used in the New England Balancing Authority Area (BAA): Connecticut, Rhode Island, Massachusetts, Vermont, New Hampshire, and most of Maine. The forecast is updated twice daily at 6:00 a.m. and 10:00 a.m. eastern prevailing time.<br><br>
@@ -182,11 +172,21 @@ if __name__ == "__main__":
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
             <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
         </p>
-        <img style="margin-left: 450px;" src="cid:image1">
-        {6}
+        <div style="font-family: Verdana; font-size: 20px; float: left; margin-top: 40px;">
+            {6}
+        </div>
+        <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
+      
+      
     </body>
     </html>
     """.format(
         peak1, hourPeak1, peak2, hourPeak2, peak3, hourPeak3, df.to_html()
     )
-    doMail.send_mail(body)
+
+    schedule.every().day.at("15:00").do(doMail.send_mail, body)
+    # doMail.send_mail(body)
+
+while True:
+    schedule.run_pending()
+    time.sleep(2)
