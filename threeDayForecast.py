@@ -7,6 +7,7 @@ import datetime
 from IPython.display import HTML
 import doMail
 import matplotlib.pyplot as plt
+import csv
 
 
 # Get the desired data from the api
@@ -47,6 +48,16 @@ def formatData(data):
         day3.strftime("%m/%d/%y"),
     ]
 
+    #     html_string = """
+    # <html>
+    #   <head><title>HTML Pandas Dataframe with CSS</title></head>
+    #   <link rel="stylesheet" type="text/css" href="df_style.css"/>
+    #   <body>
+    #     {df}
+    #   </body>
+    # </html>.
+    # """
+
     df = pd.DataFrame(
         data,
         columns=[
@@ -79,10 +90,14 @@ def formatData(data):
             # 'Hour 13', 'Hour 14', 'Hour 15', 'Hour 16', 'Hour 17', 'Hour 18',
             # 'Hour 19', 'Hour 20', 'Hour 21', 'Hour 22', 'Hour 23', 'Hour 24'
         ],
-        index=days,
+        index=[days],
     )
     df = df.transpose()
+    df.style
+    return df
 
+
+def createLineChart(df):
     df.plot.line()
     plt.xticks(
         [
@@ -115,20 +130,63 @@ def formatData(data):
     plt.xlabel("Hour End")
     plt.ylabel("MWh")
     plt.title("Three Day Forecast")
-    plt.show()
-    return df
+    plt.savefig("figure.png")
 
 
 def getPeakData(data):
 
     peak1, peak2, peak3 = max(data[0]), max(data[1]), max(data[2])
+    hourPeak1, hourPeak2, hourPeak3 = (
+        data[0].index(peak1) + 1,
+        data[1].index(peak2) + 1,
+        data[2].index(peak3) + 1,
+    )
 
-    return peak1, peak2, peak3
+    return peak1, peak2, peak3, hourPeak1, hourPeak2, hourPeak3
+
+
+# rework function
+def saveAsCsv(data):
+
+    item_count = 0
+
+    with open("test.csv", "w", newline="") as csvfile:
+        columnNames = ["HourEnd", "Mw"]
+
+        thewriter = csv.DictWriter(csvfile, fieldnames=columnNames)
+
+        thewriter.writeheader()
+
+        for item in data:
+            item_count += 1
+            thewriter.writerow({"HourEnd": item_count, "Mw": item})
 
 
 if __name__ == "__main__":
     data = retrieveData()
     data = parseData(data)
+    # data = saveAsCsv(data)
+    peak1, peak2, peak3, hourPeak1, hourPeak2, hourPeak3 = getPeakData(data)
     df = formatData(data)
-    # body = df.to_html()
-    # doMail.send_mail(body)
+    createLineChart(df)
+    body = """\
+    <html>
+    <head></head>
+    <style>
+
+    </style>
+    <body>
+        <p style="font-family: Verdana; font-size: 20px;">
+            This is a hourly systemwide demand forecast for today and the next two days. This is the expected amount of electricity to be used in the New England Balancing Authority Area (BAA): Connecticut, Rhode Island, Massachusetts, Vermont, New Hampshire, and most of Maine. The forecast is updated twice daily at 6:00 a.m. and 10:00 a.m. eastern prevailing time.<br><br>
+            <strong>Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
+            <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
+            <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
+        </p>
+        <img style="margin-left: 450px;" src="cid:image1">
+        {6}
+    </body>
+    </html>
+    """.format(
+        peak1, hourPeak1, peak2, hourPeak2, peak3, hourPeak3, df.to_html()
+    )
+    doMail.send_mail(body)
