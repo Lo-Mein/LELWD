@@ -10,6 +10,8 @@ def send_mail(body):
     message["Subject"] = "Three Day Forecast"
     message["From"] = "dev923757@gmail.com"
     message["To"] = "dev923757@gmail.com"
+    # recipients = ['ToEmail@domain.com'] 
+    # emaillist = [elem.strip().split(',') for elem in recipients]
 
     body_content = body
     message.attach(MIMEText(body_content, "html"))
