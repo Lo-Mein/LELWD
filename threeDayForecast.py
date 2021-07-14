@@ -8,38 +8,38 @@ from IPython.display import HTML
 import doMail
 import matplotlib.pyplot as plt
 import csv
-import schedule
+# import schedule
 import time
 
 
 # Get the desired data from the api
-def retrieveData():
-    sevenDayAPI = "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
+def retrieve_data():
+    seven_day_api = "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
     response = requests.get(
-        sevenDayAPI, auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1")
+        seven_day_api, auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1")
     )
     json_data = response.json()
-    demandData = json_data[0]["data"]
+    demand_data = json_data[0]["data"]
 
-    return demandData
+    return demand_data
 
 
 # Foramt the data in a way that each hour of each day displays the correct Mw
-def parseData(data):
+def parse_data(data):
     days = ["day1", "day2", "day3"]
-    mwData = [[], [], []]
+    mw_data = [[], [], []]
     i = 0
     while i < len(days):
         current = data[days[i]]
         for index in range(len(current)):
             row = current[index]["Mw"]
-            mwData[i].append(row)
+            mw_data[i].append(row)
         i += 1
-    getPeakData(mwData)
-    return mwData
+    get_peak_data(mw_data)
+    return mw_data
 
 
-def formatData(data):
+def format_data(data):
     day1 = datetime.date.today()
     day2 = day1 + datetime.timedelta(days=1)
     day3 = day1 + datetime.timedelta(days=2)
@@ -90,7 +90,7 @@ def formatData(data):
     return df
 
 
-def createLineChart(df):
+def create_line_chart(df):
     df.plot.line()
     plt.xticks(
         [
@@ -126,42 +126,42 @@ def createLineChart(df):
     plt.savefig("figure.png")
 
 
-def getPeakData(data):
+def get_peak_data(data):
 
-    peak1, peak2, peak3 = max(data[0]), max(data[1]), max(data[2])
-    hourPeak1, hourPeak2, hourPeak3 = (
-        data[0].index(peak1) + 1,
-        data[1].index(peak2) + 1,
-        data[2].index(peak3) + 1,
+    peak_1, peak_2, peak_3 = max(data[0]), max(data[1]), max(data[2])
+    hour_peak_1, hour_peak_2, hour_peak_3 = (
+        data[0].index(peak_1) + 1,
+        data[1].index(peak_2) + 1,
+        data[2].index(peak_3) + 1,
     )
 
-    return peak1, peak2, peak3, hourPeak1, hourPeak2, hourPeak3
+    return peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3
 
 
 # rework function
-def saveAsCsv(data):
+def save_as_csv(data):
 
     item_count = 0
 
     with open("test.csv", "w", newline="") as csvfile:
-        columnNames = ["HourEnd", "Mw"]
+        column_names = ["HourEnd", "Mw"]
 
-        thewriter = csv.DictWriter(csvfile, fieldnames=columnNames)
+        the_writer = csv.DictWriter(csvfile, fieldnames=column_names)
 
-        thewriter.writeheader()
+        the_writer.writeheader()
 
         for item in data:
             item_count += 1
-            thewriter.writerow({"HourEnd": item_count, "Mw": item})
+            the_writer.writerow({"HourEnd": item_count, "Mw": item})
 
 
 if __name__ == "__main__":
-    data = retrieveData()
-    data = parseData(data)
-    # data = saveAsCsv(data)
-    df = formatData(data)
-    peak1, peak2, peak3, hourPeak1, hourPeak2, hourPeak3 = getPeakData(data)
-    createLineChart(df)
+    data = retrieve_data()
+    data = parse_data(data)
+    # data = save_as_csv(data)
+    df = format_data(data)
+    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(data)
+    create_line_chart(df)
     body = """\
     <html>
     <head></head>
@@ -181,12 +181,12 @@ if __name__ == "__main__":
     </body>
     </html>
     """.format(
-        peak1, hourPeak1, peak2, hourPeak2, peak3, hourPeak3, df.to_html()
+        peak_1, hour_peak_1, peak_2, hour_peak_2, peak_3, hour_peak_3, df.to_html()
     )
 
-    schedule.every().day.at("15:00").do(doMail.send_mail, body)
-    # doMail.send_mail(body)
+    # schedule.every().day.at("15:00").do(doMail.send_mail, body)
+    doMail.send_mail(body)
 
-while True:
-    schedule.run_pending()
-    time.sleep(2)
+# while True:
+#     schedule.run_pending()
+#     time.sleep(2)

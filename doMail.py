@@ -9,7 +9,7 @@ def send_mail(body):
     message = MIMEMultipart()
     message["Subject"] = "Three Day Forecast"
     message["From"] = "dev923757@gmail.com"
-    message["To"] = "dev923757@gmail.com"
+    message["To"] = "ryan.lo@stud"
     # recipients = ['ToEmail@domain.com'] 
     # emaillist = [elem.strip().split(',') for elem in recipients]
 
