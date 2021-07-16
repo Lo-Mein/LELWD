@@ -184,8 +184,8 @@ if __name__ == "__main__":
         peak1, hourPeak1, peak2, hourPeak2, peak3, hourPeak3, df.to_html()
     )
 
-    schedule.every().day.at("15:00").do(doMail.send_mail, body)
-    # doMail.send_mail(body)
+    schedule.every().day.at("08:00").do(doMail.send_mail, body)
+    doMail.send_mail(body)
 
 while True:
     schedule.run_pending()
