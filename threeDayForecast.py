@@ -19,7 +19,7 @@ def retrieve_data():
         "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
     )
     response = requests.get(
-        seven_day_api, auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1")
+        seven_day_api, auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"), verify=False
     )
     json_data = response.json()
     demand_data = json_data[0]["data"]
@@ -35,7 +35,7 @@ def parse_data(data):
     while i < len(days):
         current = data[days[i]]
         for index in range(len(current)):
-            row = current[index]["Mw"]
+            row = "{:,}".format(current[index]["Mw"])
             mw_data[i].append(row)
         i += 1
     get_peak_data(mw_data)
@@ -52,6 +52,7 @@ def format_data(data):
         day2.strftime("%m/%d/%y"),
         day3.strftime("%m/%d/%y"),
     ]
+
 
     df = pd.DataFrame(
         data,
@@ -222,15 +223,14 @@ if __name__ == "__main__":
     # data = save_as_csv(data)
     df = format_data(data)
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(data)
-    create_line_chart(df)
-    create_pie_chart()
+    # create_line_chart(df)
+    # create_pie_chart()
     # create_peak_day_table(data)
     body = """\
     <html>
     <head></head>
     <body>
         <p style="font-family: Verdana; font-size: 20px;">
-            This is a hourly systemwide demand forecast for today and the next two days. This is the expected amount of electricity to be used in the New England Balancing Authority Area (BAA): Connecticut, Rhode Island, Massachusetts, Vermont, New Hampshire, and most of Maine. The forecast is updated twice daily at 6:00 a.m. and 10:00 a.m. eastern prevailing time.<br><br>
             <strong>Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
             <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
@@ -246,10 +246,5 @@ if __name__ == "__main__":
     """.format(
         peak_1, hour_peak_1, peak_2, hour_peak_2, peak_3, hour_peak_3, df.to_html()
     )
-
-    # schedule.every().day.at("15:00").do(doMail.send_mail, body)
     doMail.send_mail(body)
 
-# while True:
-#     schedule.run_pending()
-#     time.sleep(2)
