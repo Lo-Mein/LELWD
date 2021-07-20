@@ -129,6 +129,64 @@ def create_line_chart(df):
     plt.savefig("figure.png")
 
 
+def half_tuple(n, data):
+    hours_end = data[0]
+    args = [iter(hours_end)] * n
+    return zip(*args)
+
+
+def create_pie_chart(data):
+    # Data going into the chart
+    labels = (
+        # "End Hour 1",
+        # "End Hour 2",
+        # "End Hour 3",
+        # "End Hour 4",
+        # "End Hour 5",
+        # "End Hour 6",
+        # "End Hour 7",
+        # "End Hour 8",
+        # "End Hour 9",
+        # "End Hour 10",
+        # "End Hour 11",
+        # "End Hour 12",
+        "End Hour 13",
+        "End Hour 14",
+        "End Hour 15",
+        "End Hour 16",
+        "End Hour 17",
+        "End Hour 18",
+        "End Hour 19",
+        "End Hour 20",
+        "End Hour 21",
+        "End Hour 22",
+        "End Hour 23",
+        "End Hour 24",
+    )
+    hours_end = data[0]
+    values = half_tuple(4, data)
+    # keys = hours_end.keys()
+    # values = hours_end.values()
+    colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
+    # explode = (0.1, 0, 0, 0,0)
+
+    # Plot the data
+    plt.pie(
+        values,
+        labels=labels,
+        colors=colors,
+        autopct="%1.1f%%",
+        shadow=True,
+        startangle=140,
+    )
+    # plt.axis
+    plt.show()
+
+
+def create_peak_day_table(data):
+    day1 = datetime.date.today()
+
+
 def get_peak_data(data):
 
     peak_1, peak_2, peak_3 = max(data[0]), max(data[1]), max(data[2])
@@ -165,6 +223,8 @@ if __name__ == "__main__":
     df = format_data(data)
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(data)
     create_line_chart(df)
+    create_pie_chart()
+    # create_peak_day_table(data)
     body = """\
     <html>
     <head></head>

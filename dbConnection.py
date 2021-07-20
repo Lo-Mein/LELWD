@@ -70,6 +70,12 @@ cur.fetchall()
 # commit changes to the db
 # conn.commit()
 
+
+# copy data from the csv to postgres
+f = open(r"C:\Users\matth\python.files\lelwd\LELWD\test.csv", "r")
+cur.copy_from(f, temp_unicommerce_status, sep=",")
+f.close()
+
 # close the cursor
 cur.close()
 
