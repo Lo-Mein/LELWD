@@ -18,12 +18,19 @@ def send_mail(body):
     msgAlternative = MIMEMultipart("alternative")
     message.attach(msgAlternative)
 
-    fp = open("figure.png", "rb")
+    fp = open("./threeDay/figure.png", "rb")
     msgImage = MIMEImage(fp.read())
     fp.close()
 
     msgImage.add_header("Content-ID", "<image1>")
     message.attach(msgImage)
+
+    fp2 = open("./threeDay/figure2.png", "rb")
+    msgImage2 = MIMEImage(fp2.read())
+    fp2.close()
+
+    msgImage2.add_header("Content-ID", "<image2>")
+    message.attach(msgImage2)
 
     msg_body = message.as_string()
 

@@ -1,4 +1,5 @@
 import requests
+from pandas import DataFrame
 import json
 from requests.models import HTTPBasicAuth
 import pandas as pd
@@ -8,6 +9,10 @@ from IPython.display import HTML
 import doMail
 import matplotlib.pyplot as plt
 import csv
+from itertools import chain
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # import schedule
 import time
@@ -19,7 +24,9 @@ def retrieve_data():
         "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
     )
     response = requests.get(
-        seven_day_api, auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"), verify=False
+        seven_day_api,
+        auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
+        verify=False,
     )
     json_data = response.json()
     demand_data = json_data[0]["data"]
@@ -52,7 +59,6 @@ def format_data(data):
         day2.strftime("%m/%d/%y"),
         day3.strftime("%m/%d/%y"),
     ]
-
 
     df = pd.DataFrame(
         data,
@@ -127,34 +133,12 @@ def create_line_chart(df):
     plt.xlabel("Hour End")
     plt.ylabel("MWh")
     plt.title("Three Day Forecast")
-    plt.savefig("figure.png")
-
-
-def half_tuple(n, data):
-    hours_end = data[0]
-    args = [iter(hours_end)] * n
-    return zip(*args)
+    plt.savefig("./threeDay/figure.png")
 
 
 def create_pie_chart(data):
     # Data going into the chart
-    labels = (
-        # "End Hour 1",
-        # "End Hour 2",
-        # "End Hour 3",
-        # "End Hour 4",
-        # "End Hour 5",
-        # "End Hour 6",
-        # "End Hour 7",
-        # "End Hour 8",
-        # "End Hour 9",
-        # "End Hour 10",
-        # "End Hour 11",
-        # "End Hour 12",
-        "End Hour 13",
-        "End Hour 14",
-        "End Hour 15",
-        "End Hour 16",
+    labels = [
         "End Hour 17",
         "End Hour 18",
         "End Hour 19",
@@ -163,29 +147,46 @@ def create_pie_chart(data):
         "End Hour 22",
         "End Hour 23",
         "End Hour 24",
-    )
+    ]
+    labeling = list(labels)
     hours_end = data[0]
-    values = half_tuple(4, data)
-    # keys = hours_end.keys()
-    # values = hours_end.values()
-    colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
-    # explode = (0.1, 0, 0, 0,0)
+    length = len(hours_end)
+    middle_index = length // 3
+    last_half = hours_end[:middle_index]
+    pie_list = []
+    for i in last_half:
+        i = float(i.replace(",", ""))
+        pie_list.append([i])
+        i += 1
+    pie_list2 = list(chain.from_iterable(pie_list))
 
+    colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
+    explode = (
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    )
     # Plot the data
     plt.pie(
-        values,
-        labels=labels,
+        pie_list2,
+        explode=explode,
+        labels=labeling,
         colors=colors,
         autopct="%1.1f%%",
         shadow=True,
         startangle=140,
     )
-    # plt.axis
-    plt.show()
-
-
-def create_peak_day_table(data):
     day1 = datetime.date.today()
+    day1 = str(day1)
+    plt.title(day1 + " " + "Mwh values")
+    plt.axis("equal")
+    # plt.show()
+    plt.savefig("./threeDay/figure2.png")
 
 
 def get_peak_data(data):
@@ -214,7 +215,7 @@ def save_as_csv(data):
 
         for item in data:
             item_count += 1
-            the_writer.writerow({"HourEnd": item_count, "Mw": item})
+            the_writer.writerow({"Day": item_count, "Mw": item})
 
 
 if __name__ == "__main__":
@@ -224,27 +225,35 @@ if __name__ == "__main__":
     df = format_data(data)
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(data)
     # create_line_chart(df)
-    # create_pie_chart()
-    # create_peak_day_table(data)
+    create_pie_chart(data)
     body = """\
     <html>
-    <head></head>
+    <head>
+        <link rel="stylesheet" href="df_style.css">
+    </head>
     <body>
-        <p style="font-family: Verdana; font-size: 20px;">
-            <strong>Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
+        <p  style="font-family: Verdana; font-size: 20px;">
+            <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
             <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
         </p>
+        <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
+        <img style="float:right; width: 750px; height: 550px;" src="cid:image2">
         <div style="font-family: Verdana; font-size: 20px; float: left; margin-top: 40px;">
             {6}
         </div>
-        <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
-      
+
+
       
     </body>
     </html>
     """.format(
-        peak_1, hour_peak_1, peak_2, hour_peak_2, peak_3, hour_peak_3, df.to_html()
+        peak_1,
+        hour_peak_1,
+        peak_2,
+        hour_peak_2,
+        peak_3,
+        hour_peak_3,
+        df.to_html(),
     )
     doMail.send_mail(body)
-
