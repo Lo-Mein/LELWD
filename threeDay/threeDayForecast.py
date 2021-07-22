@@ -37,16 +37,19 @@ def retrieve_data():
 # Foramt the data in a way that each hour of each day displays the correct Mw
 def parse_data(data):
     days = ["day1", "day2", "day3"]
-    mw_data = [[], [], []]
+    graph_data = [[], [], []]
+    table_data = [[], [], []]
     i = 0
     while i < len(days):
         current = data[days[i]]
         for index in range(len(current)):
-            row = "{:,}".format(current[index]["Mw"])
-            mw_data[i].append(row)
+            graph_row = current[index]["Mw"]
+            graph_data[i].append(graph_row)
+            table_row = "{:,}".format(current[index]["Mw"])
+            table_data[i].append(table_row)
         i += 1
-    get_peak_data(mw_data)
-    return mw_data
+    
+    return table_data, graph_data
 
 
 def format_data(data):
@@ -220,12 +223,13 @@ def save_as_csv(data):
 
 if __name__ == "__main__":
     data = retrieve_data()
-    data = parse_data(data)
+    table_data, graph_data = parse_data(data)
     # data = save_as_csv(data)
-    df = format_data(data)
-    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(data)
-    # create_line_chart(df)
-    create_pie_chart(data)
+    table_df = format_data(table_data)
+    graph_df = format_data(graph_data)
+    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
+    create_pie_chart(table_data)
+    create_line_chart(graph_df)
     body = """\
     <html>
     <head>
@@ -254,6 +258,6 @@ if __name__ == "__main__":
         hour_peak_2,
         peak_3,
         hour_peak_3,
-        df.to_html(),
+        table_df.to_html(),
     )
     doMail.send_mail(body)
