@@ -230,12 +230,49 @@ if __name__ == "__main__":
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
     create_pie_chart(table_data)
     create_line_chart(graph_df)
+    today = datetime.date.today()
+    today = today.strftime("%m/%d/%y")
     body = """\
     <html>
     <head>
-        <link rel="stylesheet" href="df_style.css">
+        <link rel='stylesheet' type='text/css' media='screen' href='df_style.css'>
     </head>
     <body>
+    <table style="border: 1px solid black; border-collapse: collapse;">
+        <tr>
+            <th COLSPAN="2" style="border: 1px solid black; border-collapse: collapse;">
+               <h3><br>Monthly Peak Alert Notice</h3>
+            </th>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Date:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">{7}</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">ISO Projected Peak:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">{0}</td>
+         </tr>
+         <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">ISO Projected Hour:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">{1}</td>
+         </tr>
+         <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Threshold:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">21,883</td>
+         </tr>
+         <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Alert Rating:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">0</td>
+         </tr>
+         <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Turn on Battery/Generator?</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">No</td>
+         </tr>
+         <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Hours Ending to Run:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">N/A</td>
+         </tr>
+    </table>
         <p  style="font-family: Verdana; font-size: 20px;">
             <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
@@ -247,8 +284,6 @@ if __name__ == "__main__":
             {6}
         </div>
 
-
-      
     </body>
     </html>
     """.format(
@@ -259,5 +294,6 @@ if __name__ == "__main__":
         peak_3,
         hour_peak_3,
         table_df.to_html(),
+        today
     )
     doMail.send_mail(body)
