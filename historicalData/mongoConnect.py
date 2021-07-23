@@ -1,6 +1,8 @@
 import pymongo
 from flask import Flask
 from flask_cors import CORS
+import datetime
+from calendar import monthrange
 
 
 connection_url = "mongodb+srv://RyanMatt:JeffKramer1@historicaldata.2fqkr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
@@ -26,7 +28,7 @@ hourly_2020_demand = db.hourly_2020_demand
 
 
 count = hourly_2015_demand.count_documents({})
-print(count)
+
 
 # To insert a single document into the database,
 # insert_one() function is used
@@ -39,12 +41,19 @@ print(count)
 # use find_one to find a specific document
 
 # gets all 2015 data
-def get2015Data():
+def get2015Data(days, month):
+    max_data = dict()
     data = db.hourly_2015_demand
-    demand_list = data.find()
-    for item in demand_list:
-        print(item)
-        return item
+    for day in range(1, days+1):
+        demand_list = data.find({'Date': datetime.datetime(2015, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item['RT_Demand'] > daily_peak:
+                daily_peak = item['RT_Demand']
+                hr_end = item['Hr_End']
+        max_data[daily_peak] = hr_end
+    return max_data
+        
 
 
 # gets all 2016 data
@@ -53,6 +62,8 @@ def get2016Data():
     demand_list = data.find()
     for item in demand_list:
         print(item)
+        return item
+        
 
 
 # gets all 2017 data
@@ -86,6 +97,28 @@ def get2020Data():
     for item in demand_list:
         print(item)
 
+def pie_chart_data(month, days):
+    max_data = []
+    year = 2015
+    data_list = [db.hourly_2015_demand, db.hourly_2016_demand, db.hourly_2017_demand, db.hourly_2018_demand, db.hourly_2019_demand, db.hourly_2020_demand]
+    for data in data_list:
+        for day in range(1, days+1):
+            demand_list = data.find({'Date': datetime.datetime(year, month, day, 4, 0)})
+            daily_peak = 0
+            for item in demand_list:
+                if item['RT_Demand'] > daily_peak:
+                    daily_peak = item['RT_Demand']
+                    hr_end = item['Hr_End']
+            max_data.append(hr_end)
+        year += 1
+    return max_data
+
 
 if __name__ == "__main__":
-    data2015 = get2015Data()
+    current_month = datetime.datetime.now().month
+    num_days = monthrange(2019,current_month)[1]
+    # data2015 = get2015Data(num_days, current_month)
+    pie_data = pie_chart_data(current_month, num_days)
+    
+    
+    
