@@ -44,71 +44,111 @@ count = hourly_2015_demand.count_documents({})
 def get2015Data(days, month):
     max_data = dict()
     data = db.hourly_2015_demand
-    for day in range(1, days+1):
-        demand_list = data.find({'Date': datetime.datetime(2015, month, day, 4, 0)})
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2015, month, day, 4, 0)})
         daily_peak = 0
         for item in demand_list:
-            if item['RT_Demand'] > daily_peak:
-                daily_peak = item['RT_Demand']
-                hr_end = item['Hr_End']
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_End"]
         max_data[daily_peak] = hr_end
     return max_data
-        
 
 
 # gets all 2016 data
 def get2016Data():
+    max_data = dict()
     data = db.hourly_2016_demand
-    demand_list = data.find()
-    for item in demand_list:
-        print(item)
-        return item
-        
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2016, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_end"]
+        max_data[daily_peak] = hr_end
+        return max_data
 
 
 # gets all 2017 data
 def get2017Data():
     data = db.hourly_2017_demand
-    demand_list = data.find()
-    for item in demand_list:
-        print(item)
+    max_data = dict()
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2017, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_end"]
+        max_data[daily_peak] = hr_end
+        return max_data
 
 
 # gets all 2018 data
 def get2018Data():
     data = db.hourly_2018_demand
-    demand_list = data.find()
-    for item in demand_list:
-        print(item)
+    max_data = dict()
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2018, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_end"]
+        max_data[daily_peak] = hr_end
+        return max_data
 
 
 # gets all 2019 data
 def get2019Data():
     data = db.hourly_2019_demand
-    demand_list = data.find()
-    for item in demand_list:
-        print(item)
+    max_data = dict()
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2019, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_end"]
+        max_data[daily_peak] = hr_end
+        return max_data
 
 
 # gets all 2020 data
 def get2020Data():
+    max_data = dict()
     data = db.hourly_2020_demand
-    demand_list = data.find()
-    for item in demand_list:
-        print(item)
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2020, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_end"]
+        max_data[daily_peak] = hr_end
+        return max_data
+
 
 def pie_chart_data(month, days):
     max_data = []
     year = 2015
-    data_list = [db.hourly_2015_demand, db.hourly_2016_demand, db.hourly_2017_demand, db.hourly_2018_demand, db.hourly_2019_demand, db.hourly_2020_demand]
+    data_list = [
+        db.hourly_2015_demand,
+        db.hourly_2016_demand,
+        db.hourly_2017_demand,
+        db.hourly_2018_demand,
+        db.hourly_2019_demand,
+        db.hourly_2020_demand,
+    ]
     for data in data_list:
-        for day in range(1, days+1):
-            demand_list = data.find({'Date': datetime.datetime(year, month, day, 4, 0)})
+        for day in range(1, days + 1):
+            demand_list = data.find({"Date": datetime.datetime(year, month, day, 4, 0)})
             daily_peak = 0
             for item in demand_list:
-                if item['RT_Demand'] > daily_peak:
-                    daily_peak = item['RT_Demand']
-                    hr_end = item['Hr_End']
+                if item["RT_Demand"] > daily_peak:
+                    daily_peak = item["RT_Demand"]
+                    hr_end = item["Hr_End"]
             max_data.append(hr_end)
         year += 1
     return max_data
@@ -116,9 +156,6 @@ def pie_chart_data(month, days):
 
 if __name__ == "__main__":
     current_month = datetime.datetime.now().month
-    num_days = monthrange(2019,current_month)[1]
-    # data2015 = get2015Data(num_days, current_month)
+    num_days = monthrange(2019, current_month)[1]
+    data2015 = get2015Data(num_days, current_month)
     pie_data = pie_chart_data(current_month, num_days)
-    
-    
-    

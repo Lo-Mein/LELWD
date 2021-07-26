@@ -19,6 +19,8 @@ import time
 
 
 # Get the desired data from the api
+
+
 def retrieve_data():
     seven_day_api = (
         "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
@@ -48,7 +50,7 @@ def parse_data(data):
             table_row = "{:,}".format(current[index]["Mw"])
             table_data[i].append(table_row)
         i += 1
-    
+
     return table_data, graph_data
 
 
@@ -227,7 +229,9 @@ if __name__ == "__main__":
     # data = save_as_csv(data)
     table_df = format_data(table_data)
     graph_df = format_data(graph_data)
-    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
+    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(
+        table_data
+    )
     create_pie_chart(table_data)
     create_line_chart(graph_df)
     today = datetime.date.today()
@@ -278,11 +282,56 @@ if __name__ == "__main__":
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
             <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
         </p>
+    
+        <table >
+        <caption>	
+        <b>Threshold 1:</b>
+        Is equal to the 81st percentile of historical peak loads of the current month over the last five years.  This threshold gradually decreases until the end of the month, where it is equal to the 67th percentile.</caption>
+        <caption>
+        <b>Threshold 2:</b>
+        Is equal to 97% of the Month's Peak to date.
+        </caption>
+          <tr>
+            <th COLSPAN="2" style="border: 1px solid black; border-collapse: collapse;">
+               <h3><br>Alert Ratings Explained</h3>
+            </th>
+        </tr>
+        <tr>
+            <th scope="col">Rating</th>
+            <th scope="col">Definition</th>
+            <th scope="col">Advice</th>
+        </tr>
+        <tr>
+            <td>0</td>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>                        
+            <td>4</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>Projected peak is below the threshold by greater than 1,000 MW.</td>
+            <td>Projected peak is below the threshold by an amount between 500 and 1,000 MW.</td>
+            <td>Projected peak is below the threshold by an amount less than 500 MW.</td>
+            <td>Projected peak is above the threshold by an amount less than 500 MW.</td>
+            <td>Projected peak is above the threshold by an amount between 500 and 1,000 MW.</td>
+            <td>Projected peak is above the threshold by an amount greater than 1,000 MW.</td>
+        </tr>
+        <tr>
+            <td>Take no action.  This will not be the peak day.</td>
+            <td>Take no action.  Barring a dramatic miss by ISO this will not be the peak day.</td>
+            <td>Be aware of the situation.  Peak load is approaching threshold, but will most likely not be the peak.</td>
+            <td>Send alert.  Today has a chance of being the peak day</td>
+            <td>Send alert.  There is a strong chance that today will be the peak day</td>
+            <td>Send alert.  There is an extremely  high probability that today will be the peak day. </td>
+        </tr>
+        </table>
         <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
         <img style="float:right; width: 750px; height: 550px;" src="cid:image2">
         <div style="font-family: Verdana; font-size: 20px; float: left; margin-top: 40px;">
             {6}
         </div>
+     
 
     </body>
     </html>
@@ -294,6 +343,6 @@ if __name__ == "__main__":
         peak_3,
         hour_peak_3,
         table_df.to_html(),
-        today
+        today,
     )
     doMail.send_mail(body)
