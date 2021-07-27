@@ -10,7 +10,7 @@ import csv
 from itertools import chain
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from historicalData.mongoConnect import pie_chart_data
+from mongoConnect import pie_chart_data
 
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -145,7 +145,7 @@ def create_pie_chart(data):
     labels = []
     sizes = []
     for x, y in data.items():
-        labels.append("Hour End " + x)
+        labels.append("Hour End " + str(x))
         sizes.append(y)
     
     # hours_end = data[0]
@@ -161,6 +161,7 @@ def create_pie_chart(data):
 
     colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
     explode = (
+        0,
         0,
         0,
         0,
@@ -226,7 +227,7 @@ if __name__ == "__main__":
 
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
 
-    pie_data = mongoConnect.pie_chart_data()
+    pie_data = pie_chart_data()
     pie_dict = {i:pie_data.count(i) for i in pie_data}
 
     create_pie_chart(pie_dict)
@@ -240,7 +241,7 @@ if __name__ == "__main__":
         <link rel='stylesheet' type='text/css' media='screen' href='df_style.css'>
     </head>
     <body>
-    <table style="border: 1px solid black; border-collapse: collapse;">
+    <table style="border: 1px solid black; border-collapse: collapse; float: left;">
         <tr>
             <th COLSPAN="2" style="border: 1px solid black; border-collapse: collapse;">
                <h3><br>Monthly Peak Alert Notice</h3>
@@ -275,16 +276,19 @@ if __name__ == "__main__":
             <td style="border: 1px solid black; border-collapse: collapse;">N/A</td>
          </tr>
     </table>
-        <p  style="font-family: Verdana; font-size: 20px;">
+        <img style="float:left; width: 750px; height: 550px;" src="cid:image2">
+        <div style="clear: both;"></div>
+        <p  style="font-family: Verdana; font-size: 18px; float: left;">
             <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
             <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
         </p>
-        <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
-        <img style="float:right; width: 750px; height: 550px;" src="cid:image2">
-        <div style="font-family: Verdana; font-size: 20px; float: left; margin-top: 40px;">
+        <div style="clear: both;"></div>
+
+        <div style="font-family: Verdana; font-size: 14px; float: left; margin-top: 40px;">
             {6}
         </div>
+        <img style="float:left; width: 630px; height: 462px;" src="cid:image1">
 
     </body>
     </html>
