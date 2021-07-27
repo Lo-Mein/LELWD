@@ -174,7 +174,7 @@ def create_pie_chart(data):
     # Plot the data
     plt.pie(
         sizes,
-        explode=explode,
+        # explode=explode,
         labels=labels,
         colors=colors,
         autopct="%1.1f%%",
@@ -228,6 +228,7 @@ if __name__ == "__main__":
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
 
     pie_data = pie_chart_data()
+    pie_data.sort()
     pie_dict = {i:pie_data.count(i) for i in pie_data}
 
     create_pie_chart(pie_dict)
