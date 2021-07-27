@@ -1,9 +1,7 @@
 import requests
 from pandas import DataFrame
-import json
 from requests.models import HTTPBasicAuth
 import pandas as pd
-import numpy as np
 import datetime
 from IPython.display import HTML
 import doMail
@@ -11,6 +9,9 @@ import matplotlib.pyplot as plt
 import csv
 from itertools import chain
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+from historicalData.mongoConnect import pie_chart_data
+
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -141,27 +142,22 @@ def create_line_chart(df):
 
 def create_pie_chart(data):
     # Data going into the chart
-    labels = [
-        "End Hour 17",
-        "End Hour 18",
-        "End Hour 19",
-        "End Hour 20",
-        "End Hour 21",
-        "End Hour 22",
-        "End Hour 23",
-        "End Hour 24",
-    ]
-    labeling = list(labels)
-    hours_end = data[0]
-    length = len(hours_end)
-    middle_index = length // 3
-    last_half = hours_end[:middle_index]
-    pie_list = []
-    for i in last_half:
-        i = float(i.replace(",", ""))
-        pie_list.append([i])
-        i += 1
-    pie_list2 = list(chain.from_iterable(pie_list))
+    labels = []
+    sizes = []
+    for x, y in data.items():
+        labels.append("Hour End " + x)
+        sizes.append(y)
+    
+    # hours_end = data[0]
+    # length = len(hours_end)
+    # middle_index = length // 3
+    # last_half = hours_end[:middle_index]
+    # pie_list = []
+    # for i in last_half:
+    #     i = float(i.replace(",", ""))
+    #     pie_list.append([i])
+    #     i += 1
+    # pie_list2 = list(chain.from_iterable(pie_list))
 
     colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
     explode = (
@@ -172,21 +168,21 @@ def create_pie_chart(data):
         0,
         0,
         0,
-        0,
+        0
     )
     # Plot the data
     plt.pie(
-        pie_list2,
+        sizes,
         explode=explode,
-        labels=labeling,
+        labels=labels,
         colors=colors,
         autopct="%1.1f%%",
         shadow=True,
         startangle=140,
     )
-    day1 = datetime.date.today()
-    day1 = str(day1)
-    plt.title(day1 + " " + "Mwh values")
+    month = datetime.datetime.now()
+    month = month.strftime("%B")
+    plt.title(month + "'s Year Historical Peak Hour")
     plt.axis("equal")
     # plt.show()
     plt.savefig("./threeDay/figure2.png")
@@ -224,12 +220,18 @@ def save_as_csv(data):
 if __name__ == "__main__":
     data = retrieve_data()
     table_data, graph_data = parse_data(data)
-    # data = save_as_csv(data)
+    
     table_df = format_data(table_data)
     graph_df = format_data(graph_data)
+
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
-    create_pie_chart(table_data)
+
+    pie_data = mongoConnect.pie_chart_data()
+    pie_dict = {i:pie_data.count(i) for i in pie_data}
+
+    create_pie_chart(pie_dict)
     create_line_chart(graph_df)
+
     today = datetime.date.today()
     today = today.strftime("%m/%d/%y")
     body = """\
