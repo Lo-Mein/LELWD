@@ -130,7 +130,9 @@ def get2020Data():
         return max_data
 
 
-def pie_chart_data(month, days):
+def pie_chart_data():
+    month = datetime.datetime.now().month
+    days = monthrange(2019, month)[1]
     max_data = []
     year = 2015
     data_list = [
@@ -155,7 +157,6 @@ def pie_chart_data(month, days):
 
 
 if __name__ == "__main__":
-    current_month = datetime.datetime.now().month
-    num_days = monthrange(2019, current_month)[1]
-    data2015 = get2015Data(num_days, current_month)
-    pie_data = pie_chart_data(current_month, num_days)
+    pie_data = pie_chart_data()
+    pie_dict = {i: pie_data.count(i) for i in pie_data}
+    print(pie_dict)
