@@ -9,8 +9,10 @@ import matplotlib.pyplot as plt
 import csv
 from itertools import chain
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import xmltodict
+from xml.etree import ElementTree
 
-from mongoConnect import pie_chart_data
+from mongoConnect import get_monthly_historical_data
 
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -34,7 +36,18 @@ def retrieve_data():
 
     return demand_data
 
-
+def retrieve_realtime_data():
+    seven_day_api = (
+        "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/20210728/location/32"
+    )
+    response = requests.get(
+        seven_day_api,
+        auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
+        verify=False,
+    )
+    xml_data = response.content
+    xml_dict = xmltodict.parse(xml_data)
+    print(xml_dict['HourlySystemLoads']['HourlySystemLoad'][0]['Load'])
 # Foramt the data in a way that each hour of each day displays the correct Mw
 def parse_data(data):
     days = ["day1", "day2", "day3"]
@@ -219,88 +232,89 @@ def save_as_csv(data):
 
 
 if __name__ == "__main__":
-    data = retrieve_data()
-    table_data, graph_data = parse_data(data)
+    retrieve_realtime_data()
+    # data = retrieve_data()
+    # table_data, graph_data = parse_data(data)
     
-    table_df = format_data(table_data)
-    graph_df = format_data(graph_data)
+    # table_df = format_data(table_data)
+    # graph_df = format_data(graph_data)
 
-    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
+    # peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(table_data) 
 
-    pie_data = pie_chart_data()
-    pie_data.sort()
-    pie_dict = {i:pie_data.count(i) for i in pie_data}
+    # pie_data = pie_chart_data()
+    # pie_data.sort()
+    # pie_dict = {i:pie_data.count(i) for i in pie_data}
 
-    create_pie_chart(pie_dict)
-    create_line_chart(graph_df)
+    # create_pie_chart(pie_dict)
+    # create_line_chart(graph_df)
 
-    today = datetime.date.today()
-    today = today.strftime("%m/%d/%y")
-    body = """\
-    <html>
-    <head>
-        <link rel='stylesheet' type='text/css' media='screen' href='df_style.css'>
-    </head>
-    <body>
-    <table style="border: 1px solid black; border-collapse: collapse; float: left;">
-        <tr>
-            <th COLSPAN="2" style="border: 1px solid black; border-collapse: collapse;">
-               <h3><br>Monthly Peak Alert Notice</h3>
-            </th>
-        </tr>
-        <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Date:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">{7}</td>
-        </tr>
-        <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">ISO Projected Peak:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">{0}</td>
-         </tr>
-         <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">ISO Projected Hour:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">{1}</td>
-         </tr>
-         <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Threshold:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">21,883</td>
-         </tr>
-         <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Alert Rating:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">0</td>
-         </tr>
-         <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Turn on Battery/Generator?</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">No</td>
-         </tr>
-         <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Hours Ending to Run:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">N/A</td>
-         </tr>
-    </table>
-        <img style="float:left; width: 750px; height: 550px;" src="cid:image2">
-        <div style="clear: both;"></div>
-        <p  style="font-family: Verdana; font-size: 18px; float: left;">
-            <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
-            <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
-            <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
-        </p>
-        <div style="clear: both;"></div>
+    # today = datetime.date.today()
+    # today = today.strftime("%m/%d/%y")
+    # body = """\
+    # <html>
+    # <head>
+    #     <link rel='stylesheet' type='text/css' media='screen' href='df_style.css'>
+    # </head>
+    # <body>
+    # <table style="border: 1px solid black; border-collapse: collapse; float: left;">
+    #     <tr>
+    #         <th COLSPAN="2" style="border: 1px solid black; border-collapse: collapse;">
+    #            <h3><br>Monthly Peak Alert Notice</h3>
+    #         </th>
+    #     </tr>
+    #     <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Date:</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">{7}</td>
+    #     </tr>
+    #     <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">ISO Projected Peak:</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">{0}</td>
+    #      </tr>
+    #      <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">ISO Projected Hour:</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">{1}</td>
+    #      </tr>
+    #      <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Threshold:</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">21,883</td>
+    #      </tr>
+    #      <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Alert Rating:</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">0</td>
+    #      </tr>
+    #      <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Turn on Battery/Generator?</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">No</td>
+    #      </tr>
+    #      <tr>
+    #         <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Hours Ending to Run:</th>
+    #         <td style="border: 1px solid black; border-collapse: collapse;">N/A</td>
+    #      </tr>
+    # </table>
+    #     <img style="float:left; width: 750px; height: 550px;" src="cid:image2">
+    #     <div style="clear: both;"></div>
+    #     <p  style="font-family: Verdana; font-size: 18px; float: left;">
+    #         <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
+    #         <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
+    #         <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
+    #     </p>
+    #     <div style="clear: both;"></div>
 
-        <div style="font-family: Verdana; font-size: 14px; float: left; margin-top: 40px;">
-            {6}
-        </div>
-        <img style="float:left; width: 630px; height: 462px;" src="cid:image1">
+    #     <div style="font-family: Verdana; font-size: 14px; float: left; margin-top: 40px;">
+    #         {6}
+    #     </div>
+    #     <img style="float:left; width: 630px; height: 462px;" src="cid:image1">
 
-    </body>
-    </html>
-    """.format(
-        peak_1,
-        hour_peak_1,
-        peak_2,
-        hour_peak_2,
-        peak_3,
-        hour_peak_3,
-        table_df.to_html(),
-        today
-    )
-    doMail.send_mail(body)
+    # </body>
+    # </html>
+    # """.format(
+    #     peak_1,
+    #     hour_peak_1,
+    #     peak_2,
+    #     hour_peak_2,
+    #     peak_3,
+    #     hour_peak_3,
+    #     table_df.to_html(),
+    #     today
+    # )
+    # doMail.send_mail(body)
