@@ -4,6 +4,7 @@ from flask_cors import CORS
 import datetime
 from calendar import monthrange
 import numpy as np
+# from threeDayForecast import retrieve_actual_data
 
 
 connection_url = "mongodb+srv://RyanMatt:JeffKramer1@historicaldata.2fqkr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
@@ -121,8 +122,23 @@ def get_monthly_historical_data():
 
 
 if __name__ == "__main__":
-    pie_data, threshold_data = get_monthly_historical_data()
-    print(np.percentile(threshold_data, 75))
+    # pie_data, threshold_data = get_monthly_historical_data()
+    # print(np.percentile(threshold_data, 75))
+    # d = datetime.date.today()
+    # month_data = []
+    # for day in range(1, d.day):
+    #     api_date = '{}{:02d}{:02d}'.format(d.year,d.month, day)
+    #     api_data = retrieve_actual_data(api_date)
+    #     day_peak = float(0)
+    #     for i in range(23):
+    #         day_data = float(api_data[i]['Load'])
+    #         if day_data > day_peak:
+    #             day_peak = day_data
+    #     month_data.append(day_peak)
+    
+    # print(max(month_data) * .97)
+    pass
+
     
     
     
