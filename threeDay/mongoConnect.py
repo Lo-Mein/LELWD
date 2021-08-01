@@ -3,6 +3,8 @@ from flask import Flask
 from flask_cors import CORS
 import datetime
 from calendar import monthrange
+import numpy as np
+# from threeDayForecast import retrieve_actual_data
 
 
 connection_url = "mongodb+srv://RyanMatt:JeffKramer1@historicaldata.2fqkr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
@@ -130,33 +132,53 @@ def get2020Data():
         return max_data
 
 
-def pie_chart_data():
+
+def get_monthly_historical_data():
     month = datetime.datetime.now().month
-    days = monthrange(2019, month)[1]
-    max_data = []
+    days = monthrange(2019,month)[1]
+    max_hour = []
+    max_peak = []
     year = 2015
-    data_list = [
-        db.hourly_2015_demand,
-        db.hourly_2016_demand,
-        db.hourly_2017_demand,
-        db.hourly_2018_demand,
-        db.hourly_2019_demand,
-        db.hourly_2020_demand,
-    ]
-    for data in data_list:
-        for day in range(1, days + 1):
-            demand_list = data.find({"Date": datetime.datetime(year, month, day, 4, 0)})
+    year_data = [db.hourly_2015_demand, db.hourly_2016_demand, db.hourly_2017_demand, db.hourly_2018_demand, db.hourly_2019_demand, db.hourly_2020_demand]
+    for data in year_data:
+        for day in range(1, days+1):
+            demand_list = data.find({'Date': datetime.datetime(year, month, day, 4, 0)})
             daily_peak = 0
             for item in demand_list:
-                if item["RT_Demand"] > daily_peak:
-                    daily_peak = item["RT_Demand"]
-                    hr_end = item["Hr_End"]
-            max_data.append(hr_end)
+                if item['RT_Demand'] > daily_peak:
+                    daily_peak = item['RT_Demand']
+                    hr_end = item['Hr_End']
+            max_hour.append(hr_end)
+            max_peak.append(daily_peak)
         year += 1
-    return max_data
+    return max_hour, max_peak
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     pie_data = pie_chart_data()
     pie_dict = {i: pie_data.count(i) for i in pie_data}
     print(pie_dict)
+=======
+    # pie_data, threshold_data = get_monthly_historical_data()
+    # print(np.percentile(threshold_data, 75))
+    # d = datetime.date.today()
+    # month_data = []
+    # for day in range(1, d.day):
+    #     api_date = '{}{:02d}{:02d}'.format(d.year,d.month, day)
+    #     api_data = retrieve_actual_data(api_date)
+    #     day_peak = float(0)
+    #     for i in range(23):
+    #         day_data = float(api_data[i]['Load'])
+    #         if day_data > day_peak:
+    #             day_peak = day_data
+    #     month_data.append(day_peak)
+    
+    # print(max(month_data) * .97)
+    pass
+
+    
+    
+    
+    
+>>>>>>> origin/Ryan

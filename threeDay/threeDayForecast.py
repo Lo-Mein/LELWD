@@ -1,22 +1,20 @@
 import requests
-from pandas import DataFrame
 from requests.models import HTTPBasicAuth
 import pandas as pd
+import numpy as np
 import datetime
-from IPython.display import HTML
 import doMail
 import matplotlib.pyplot as plt
 import csv
 from itertools import chain
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import xmltodict
 
-from mongoConnect import pie_chart_data
+
+from mongoConnect import get_monthly_historical_data
 
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-# import schedule
-import time
 
 
 # Get the desired data from the api
@@ -35,6 +33,37 @@ def retrieve_data():
     demand_data = json_data[0]["data"]
 
     return demand_data
+
+
+def retrieve_actual_data(api_date):
+    actual_data_api = "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{}/location/32".format(
+        api_date
+    )
+    response = requests.get(
+        actual_data_api,
+        auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
+        verify=False,
+    )
+    xml_data = response.content
+    xml_dict = xmltodict.parse(xml_data)
+
+    return xml_dict["HourlySystemLoads"]["HourlySystemLoad"]
+
+
+def current_month_threshold():
+    d = datetime.date.today()
+    month_data = []
+    for day in range(1, d.day):
+        api_date = "{}{:02d}{:02d}".format(d.year, d.month, day)
+        api_data = retrieve_actual_data(api_date)
+        day_peak = float(0)
+        for i in range(23):
+            day_data = float(api_data[i]["Load"])
+            if day_data > day_peak:
+                day_peak = day_data
+        month_data.append(day_peak)
+
+    return round(max(month_data) * 0.97)
 
 
 # Foramt the data in a way that each hour of each day displays the correct Mw
@@ -106,7 +135,7 @@ def format_data(data):
     return df
 
 
-def create_line_chart(df):
+def create_line_chart(df, threshold_1, threshold_2):
     df.plot.line()
     plt.xticks(
         [
@@ -136,6 +165,8 @@ def create_line_chart(df):
             24,
         ]
     )
+    plt.axhline(y=threshold_1, color="red")
+    plt.axhline(y=threshold_2, color="black")
     plt.xlabel("Hour End")
     plt.ylabel("MWh")
     plt.title("Three Day Forecast")
@@ -218,15 +249,18 @@ if __name__ == "__main__":
     graph_df = format_data(graph_data)
 
     peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(
-        table_data
+        graph_data
     )
 
-    pie_data = pie_chart_data()
+    pie_data, threshold = get_monthly_historical_data()
+    historical_threshold = np.percentile(threshold, 75)
+    monthly_threshold = current_month_threshold()
+
     pie_data.sort()
     pie_dict = {i: pie_data.count(i) for i in pie_data}
 
     create_pie_chart(pie_dict)
-    create_line_chart(graph_df)
+    create_line_chart(graph_df, historical_threshold, monthly_threshold)
 
     today = datetime.date.today()
     today = today.strftime("%m/%d/%y")
@@ -260,8 +294,12 @@ if __name__ == "__main__":
             <td style="border: 1px solid black; border-collapse: collapse;">{1}</td>
          </tr>
          <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Threshold:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">21,883</td>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Historical Threshold:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">{8}</td>
+         </tr>
+         <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Current Month Threshold:</th>
+            <td style="border: 1px solid black; border-collapse: collapse;">{9}</td>
          </tr>
          <tr>
             <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Alert Rating:</th>
@@ -342,5 +380,7 @@ if __name__ == "__main__":
         hour_peak_3,
         table_df.to_html(),
         today,
+        historical_threshold,
+        monthly_threshold,
     )
     doMail.send_mail(body)
