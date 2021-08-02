@@ -1,3 +1,4 @@
+from numpy.lib.function_base import diff
 import requests
 from requests.models import HTTPBasicAuth
 import pandas as pd
@@ -59,6 +60,9 @@ def current_month_threshold():
             if day_data > day_peak:
                 day_peak = day_data
         month_data.append(day_peak)
+    
+    if len(month_data) == 0:
+        return 0
     
     return round(max(month_data) * .97)
 
@@ -161,6 +165,7 @@ def create_line_chart(df, threshold_1, threshold_2):
             24,
         ]
     )
+    plt.legend(title= "Days", loc= 3)
     plt.axhline(y=threshold_1, color='red')
     plt.axhline(y=threshold_2, color='black')
     plt.xlabel("Hour End")
@@ -247,6 +252,35 @@ def save_as_csv(data):
             the_writer.writerow({"Day": item_count, "Mw": item})
 
 
+def alert_rating(peak, threshold):
+    if threshold == 0:
+        decision = "N/A"
+        rating = "N/A"
+        return rating, decision
+
+    difference = peak - threshold
+
+    if difference < -1000:
+        decision = "No"
+        rating = 0
+    elif difference >= -1000 and difference <= -500:
+        decision = "No"
+        rating = 1
+    elif difference > -500 and difference <= 0:
+        decision = "No"
+        rating = 2
+    elif difference > 0 and difference <= 500:
+        decision = "Yes"
+        rating = 3
+    elif difference > 500 and difference <= 1000:
+        decision = "Yes"
+        rating = 4
+    elif difference > 1000:
+        decision = "Yes"
+        rating = 5
+
+    return rating, decision
+
 if __name__ == "__main__":
     data = retrieve_data()
     table_data, graph_data = parse_data(data)
@@ -268,6 +302,8 @@ if __name__ == "__main__":
 
     today = datetime.date.today()
     today = today.strftime("%m/%d/%y")
+
+    rating, decision = alert_rating(peak_1, monthly_threshold)
     body = """\
     <html>
     <head>
@@ -302,18 +338,14 @@ if __name__ == "__main__":
          </tr>
          <tr>
             <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Alert Rating:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">0</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{10}</td>
          </tr>
          <tr>
             <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Turn on Battery/Generator?</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">No</td>
-         </tr>
-         <tr>
-            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Hours Ending to Run:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">N/A</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{11}</td>
          </tr>
     </table>
-        <img style="float:left; width: 750px; height: 550px;" src="cid:image2">
+        <img style="float:left; width: 375px; height: 275px; padding-left: 25px;" src="cid:image2">
         <div style="clear: both;"></div>
         <p  style="font-family: Verdana; font-size: 18px; float: left;">
             <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
@@ -339,7 +371,9 @@ if __name__ == "__main__":
         table_df.to_html(),
         today,
         historical_threshold,
-        monthly_threshold
+        monthly_threshold,
+        rating,
+        decision
         
     )
     doMail.send_mail(body)
