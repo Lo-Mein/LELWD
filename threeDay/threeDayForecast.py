@@ -249,30 +249,37 @@ def alert_rating(peak, threshold):
     if threshold == 0:
         decision = "N/A"
         rating = "N/A"
-        return rating, decision
+        color = '#c4d79b'
+        return rating, decision, color
 
     difference = peak - threshold
 
     if difference < -1000:
         decision = "No"
         rating = 0
+        color = '#c4d79b'
     elif difference >= -1000 and difference <= -500:
         decision = "No"
         rating = 1
+        color = '#d8e4bc'
     elif difference > -500 and difference <= 0:
         decision = "No"
         rating = 2
+        color = '#ebf1de'
     elif difference > 0 and difference <= 500:
         decision = "Yes"
         rating = 3
+        color = '#f2dcdb'
     elif difference > 500 and difference <= 1000:
         decision = "Yes"
         rating = 4
+        color = '#e6b8b7'
     elif difference > 1000:
         decision = "Yes"
         rating = 5
+        color = '#da9694'
 
-    return rating, decision
+    return rating, decision, color
 
 if __name__ == "__main__":
     data = retrieve_data()
@@ -296,9 +303,14 @@ if __name__ == "__main__":
     create_line_chart(graph_df, historical_threshold, monthly_threshold)
 
     today = datetime.date.today()
-    today = today.strftime("%m/%d/%y")
+    tomorrow = today + datetime.timedelta(days=1)
+    third_day = today + datetime.timedelta(days=2)
 
-    rating, decision = alert_rating(peak_1, monthly_threshold)
+    today = today.strftime("%m/%d/%y")
+    tomorrow = tomorrow.strftime("%m/%d/%y")
+    third_day = third_day.strftime("%m/%d/%y")
+
+    rating, decision, color = alert_rating(peak_1, monthly_threshold)
     body = """\
     <html>
    
@@ -338,7 +350,7 @@ if __name__ == "__main__":
          </tr>
          <tr>
             <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Alert Rating:</th>
-            <td style="border: 1px solid black; border-collapse: collapse;">{10}</td>
+            <td style="border: 1px solid black; border-collapse: collapse; background: {14}">{10}</td>
          </tr>
          <tr>
             <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Turn on Battery/Generator?</th>
@@ -346,58 +358,82 @@ if __name__ == "__main__":
          </tr>
     </table>
         <img style="float:left; width: 375px; height: 275px; padding-left: 25px;" src="cid:image2">
-        <div style="clear: both;"></div>
-        <p  style="font-family: Verdana; font-size: 18px; float: left;">
-            <strong class="upTop">Today's Projected Peak (MW)</strong> {0} at HE {1}<br>
-            <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
-            <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
-        </p>
+        
+    <table style="border: 1px solid black; border-collapse: collapse; float: left;">
+        <tr>
+            <th colspan="3" style="border: 1px solid black; border-collapse: collapse; column-span: all;">
+               <h3>Three Day Forecast</h3>
+            </th>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Date:</th>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Projected Peak</th>
+            <th style="border: 1px solid black; border-collapse: collapse; text-align: left;">Hour End</th>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; border-collapse: collapse;">{7} (Today)</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{0}</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{1}</td>
+         </tr>
+         <tr>
+            <td style="border: 1px solid black; border-collapse: collapse;">{12}</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{2}</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{3}</td>
+         </tr>
+         <tr>
+            <td style="border: 1px solid black; border-collapse: collapse;">{13}</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{4}</td>
+            <td style="border: 1px solid black; border-collapse: collapse;">{5}</td>
+         </tr>
+    </table>
     
-    <table style="width:100%; height: 500px;">
-        <caption style="font-family: Verdana; font-size: 18px;">	
-        <b>Threshold 1:</b>
-        Is equal to the 81st percentile of historical peak loads of the current month over the last five years.  This threshold gradually decreases until the end of the month, where it is equal to the 67th percentile.</caption>
-        <caption style="font-family: Verdana; font-size: 18px; ">
-        <b>Threshold 2:</b>
+    <div style="clear: both;"></div>
+
+        <div style="font-family: Verdana; font-size: 14px; float: left; margin-top: 40px;">
+            {6}
+        </div>
+        <img style="float:left; width: 630px; height: 462px;" src="cid:image1">
+        <div style="clear: both;"></div>
+
+        <table style="width:100%; height: 500px;">
+        <caption style="font-family: Verdana; font-size: 14px; text-align: left;">	
+        <b>Historical Threshold:</b>
+        Is equal to the 75th percentile of historical peak loads of the current month over the last five years.</caption>
+        <caption style="font-family: Verdana; font-size: 14px; text-align: left;">
+        <b>Current Month Threshold:</b>
         Is equal to 97% of the Month's Peak to date.
         </caption>
         <tr>
             <th COLSPAN="6" style="height: 50px; border: 1px solid black; border-collapse: collapse; width:100%;">
-               <h3 style=" font: bold 35px Georgia, serif;height: 80px; "><br>Alert Ratings Explained</h3>
+               <h3 style=" font: bold 20px Georgia, serif;height: 80px; "><br>Alert Ratings Explained</h3>
             </th>
         </tr>
  
             <tr border: 1px solid black;>
-                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 20px Arial, sans-serif;">0</td>
-                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 20px Arial, sans-serif;">1</td>
-                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 20px Arial, sans-serif;">2</td>
-                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb; border: 1px solid black; font: 20px Arial, sans-serif;">3</td>                        
-                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7; border: 1px solid black; font: 20px Arial, sans-serif;">4</td>
-                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#da9694; border: 1px solid black; font: 20px Arial, sans-serif;">5</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 14px Arial, sans-serif;">0</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 14px Arial, sans-serif;">1</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 14px Arial, sans-serif;">2</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb; border: 1px solid black; font: 14px Arial, sans-serif;">3</td>                        
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7; border: 1px solid black; font: 14px Arial, sans-serif;">4</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#da9694; border: 1px solid black; font: 14px Arial, sans-serif;">5</td>
             </tr>
             <tr >
-                <td style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is below the threshold by greater than 1,000 MW. </td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is below the threshold by an amount between 500 and 1,000 MW.</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is below the threshold by an amount less than 500 MW.</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is above the threshold by an amount less than 500 MW.</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is above the threshold by an amount between 500 and 1,000 MW.</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background:#da9694; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is above the threshold by an amount greater than 1,000 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 14px Arial, sans-serif;">Projected peak is below the threshold by greater than 1,000 MW. </td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 14px Arial, sans-serif;">Projected peak is below the threshold by an amount between 500 and 1,000 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 14px Arial, sans-serif;">Projected peak is below the threshold by an amount less than 500 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb; border: 1px solid black; font: 14px Arial, sans-serif;">Projected peak is above the threshold by an amount less than 500 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7; border: 1px solid black; font: 14px Arial, sans-serif;">Projected peak is above the threshold by an amount between 500 and 1,000 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#da9694; border: 1px solid black; font: 14px Arial, sans-serif;">Projected peak is above the threshold by an amount greater than 1,000 MW.</td>
             </tr>
             <tr >
-                <td style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 20px Arial, sans-serif;">Take no action.  This will not be the peak day. </td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 20px Arial, sans-serif;">Take no action.  Barring a dramatic miss by ISO this will not be the peak day.</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 20px Arial, sans-serif;">Be aware of the situation.  Peak load is approaching threshold, but will most likely not be the peak.</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb;border: 1px solid black; font: 20px Arial, sans-serif;">Send alert.  Today has a chance of being the peak day</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7;border: 1px solid black; font: 20px Arial, sans-serif;">Send alert.  There is a strong chance that today will be the peak day</td>
-                <td style="padding:0in 5.4pt 0in 5.4pt; background:#da9694;border: 1px solid black; font: 20px Arial, sans-serif;">Send alert.  There is an extremely  high probability that today will be the peak day. </td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 14px Arial, sans-serif;">Take no action.  This will not be the peak day. </td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 14px Arial, sans-serif;">Take no action.  Barring a dramatic miss by ISO this will not be the peak day.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 14px Arial, sans-serif;">Be aware of the situation.  Peak load is approaching threshold, but will most likely not be the peak.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb;border: 1px solid black; font: 14px Arial, sans-serif;">Send alert.  Today has a chance of being the peak day</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7;border: 1px solid black; font: 14px Arial, sans-serif;">Send alert.  There is a strong chance that today will be the peak day</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#da9694;border: 1px solid black; font: 14px Arial, sans-serif;">Send alert.  There is an extremely  high probability that today will be the peak day. </td>
             </tr>
     </table>
-        <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
-        <div style="font-family: Verdana; font-size: 20px; float: left; margin-top: 40px;">
-            {6}
-        </div>
-     
-        <div style="clear: both;"></div>
 
 
     </body>
@@ -414,7 +450,10 @@ if __name__ == "__main__":
         historical_threshold,
         monthly_threshold,
         rating,
-        decision
+        decision,
+        tomorrow,
+        third_day,
+        color
         
     )
     doMail.send_mail(body)
