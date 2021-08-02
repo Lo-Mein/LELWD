@@ -18,8 +18,9 @@ from mongoConnect import get_monthly_historical_data
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
-
 # Get the desired data from the api
+
+
 def retrieve_data():
     seven_day_api = (
         "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
@@ -34,9 +35,10 @@ def retrieve_data():
 
     return demand_data
 
+
 def retrieve_actual_data(api_date):
-    actual_data_api = (
-        "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{}/location/32".format(api_date)
+    actual_data_api = "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{}/location/32".format(
+        api_date
     )
     response = requests.get(
         actual_data_api,
@@ -46,17 +48,18 @@ def retrieve_actual_data(api_date):
     xml_data = response.content
     xml_dict = xmltodict.parse(xml_data)
 
-    return xml_dict['HourlySystemLoads']['HourlySystemLoad']
+    return xml_dict["HourlySystemLoads"]["HourlySystemLoad"]
+
 
 def current_month_threshold():
     d = datetime.date.today()
     month_data = []
     for day in range(1, d.day):
-        api_date = '{}{:02d}{:02d}'.format(d.year,d.month, day)
+        api_date = "{}{:02d}{:02d}".format(d.year, d.month, day)
         api_data = retrieve_actual_data(api_date)
         day_peak = float(0)
         for i in range(23):
-            day_data = float(api_data[i]['Load'])
+            day_data = float(api_data[i]["Load"])
             if day_data > day_peak:
                 day_peak = day_data
         month_data.append(day_peak)
@@ -80,7 +83,7 @@ def parse_data(data):
             table_row = "{:,}".format(current[index]["Mw"])
             table_data[i].append(table_row)
         i += 1
-    
+
     return table_data, graph_data
 
 
@@ -181,7 +184,7 @@ def create_pie_chart(data):
     for x, y in data.items():
         labels.append("Hour End " + str(x))
         sizes.append(y)
-    
+
     # hours_end = data[0]
     # length = len(hours_end)
     # middle_index = length // 3
@@ -194,17 +197,7 @@ def create_pie_chart(data):
     # pie_list2 = list(chain.from_iterable(pie_list))
 
     colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
-    explode = (
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    )
+    explode = (0, 0, 0, 0, 0, 0, 0, 0, 0)
     # Plot the data
     plt.pie(
         sizes,
@@ -284,18 +277,20 @@ def alert_rating(peak, threshold):
 if __name__ == "__main__":
     data = retrieve_data()
     table_data, graph_data = parse_data(data)
-    
+
     table_df = format_data(table_data)
     graph_df = format_data(graph_data)
 
-    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(graph_data) 
+    peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3 = get_peak_data(
+        graph_data
+    )
 
     pie_data, threshold = get_monthly_historical_data()
     historical_threshold = np.percentile(threshold, 75)
     monthly_threshold = current_month_threshold()
 
     pie_data.sort()
-    pie_dict = {i:pie_data.count(i) for i in pie_data}
+    pie_dict = {i: pie_data.count(i) for i in pie_data}
 
     create_pie_chart(pie_dict)
     create_line_chart(graph_df, historical_threshold, monthly_threshold)
@@ -306,13 +301,18 @@ if __name__ == "__main__":
     rating, decision = alert_rating(peak_1, monthly_threshold)
     body = """\
     <html>
+   
     <head>
+        <meta charset="UTF-8">
         <link rel='stylesheet' type='text/css' media='screen' href='df_style.css'>
     </head>
+    <style type="text/css">
+  
+    </style>
     <body>
     <table style="border: 1px solid black; border-collapse: collapse; float: left;">
         <tr>
-            <th COLSPAN="2" style="border: 1px solid black; border-collapse: collapse;">
+            <th colspan="6" style="border: 1px solid black; border-collapse: collapse; column-span: all;">
                <h3><br>Monthly Peak Alert Notice</h3>
             </th>
         </tr>
@@ -352,12 +352,53 @@ if __name__ == "__main__":
             <strong>Tomorrow's Projected Peak (MW)</strong> {2} at HE {3}<br>
             <strong>Day Three Projected Peak (MW)</strong> {4} at HE {5}<br>
         </p>
-        <div style="clear: both;"></div>
-
-        <div style="font-family: Verdana; font-size: 14px; float: left; margin-top: 40px;">
+    
+    <table style="width:100%; height: 500px;">
+        <caption style="font-family: Verdana; font-size: 18px;">	
+        <b>Threshold 1:</b>
+        Is equal to the 81st percentile of historical peak loads of the current month over the last five years.  This threshold gradually decreases until the end of the month, where it is equal to the 67th percentile.</caption>
+        <caption style="font-family: Verdana; font-size: 18px; ">
+        <b>Threshold 2:</b>
+        Is equal to 97% of the Month's Peak to date.
+        </caption>
+        <tr>
+            <th COLSPAN="6" style="height: 50px; border: 1px solid black; border-collapse: collapse; width:100%;">
+               <h3 style=" font: bold 35px Georgia, serif;height: 80px; "><br>Alert Ratings Explained</h3>
+            </th>
+        </tr>
+ 
+            <tr border: 1px solid black;>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 20px Arial, sans-serif;">0</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 20px Arial, sans-serif;">1</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 20px Arial, sans-serif;">2</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb; border: 1px solid black; font: 20px Arial, sans-serif;">3</td>                        
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7; border: 1px solid black; font: 20px Arial, sans-serif;">4</td>
+                <td scope="col" style="padding:0in 5.4pt 0in 5.4pt; background:#da9694; border: 1px solid black; font: 20px Arial, sans-serif;">5</td>
+            </tr>
+            <tr >
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is below the threshold by greater than 1,000 MW. </td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is below the threshold by an amount between 500 and 1,000 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is below the threshold by an amount less than 500 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is above the threshold by an amount less than 500 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is above the threshold by an amount between 500 and 1,000 MW.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#da9694; border: 1px solid black; font: 20px Arial, sans-serif;">Projected peak is above the threshold by an amount greater than 1,000 MW.</td>
+            </tr>
+            <tr >
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #c4d79b; border: 1px solid black; font: 20px Arial, sans-serif;">Take no action.  This will not be the peak day. </td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #d8e4bc; border: 1px solid black; font: 20px Arial, sans-serif;">Take no action.  Barring a dramatic miss by ISO this will not be the peak day.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background: #ebf1de; border: 1px solid black; font: 20px Arial, sans-serif;">Be aware of the situation.  Peak load is approaching threshold, but will most likely not be the peak.</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#f2dcdb;border: 1px solid black; font: 20px Arial, sans-serif;">Send alert.  Today has a chance of being the peak day</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#e6b8b7;border: 1px solid black; font: 20px Arial, sans-serif;">Send alert.  There is a strong chance that today will be the peak day</td>
+                <td style="padding:0in 5.4pt 0in 5.4pt; background:#da9694;border: 1px solid black; font: 20px Arial, sans-serif;">Send alert.  There is an extremely  high probability that today will be the peak day. </td>
+            </tr>
+    </table>
+        <img style="float:right; width: 750px; height: 550px;" src="cid:image1">
+        <div style="font-family: Verdana; font-size: 20px; float: left; margin-top: 40px;">
             {6}
         </div>
-        <img style="float:left; width: 630px; height: 462px;" src="cid:image1">
+     
+        <div style="clear: both;"></div>
+
 
     </body>
     </html>
