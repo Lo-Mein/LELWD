@@ -32,6 +32,13 @@ def send_mail(body):
     msgImage2.add_header("Content-ID", "<image2>")
     message.attach(msgImage2)
 
+    fp3 = open("./threeDay/figure3.png", "rb")
+    msgImage3 = MIMEImage(fp3.read())
+    fp3.close()
+
+    msgImage3.add_header("Content-ID", "<image3>")
+    message.attach(msgImage3)
+
     msg_body = message.as_string()
 
     server = SMTP("smtp.gmail.com", 587)

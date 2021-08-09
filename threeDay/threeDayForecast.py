@@ -22,11 +22,11 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 def retrieve_data():
-    seven_day_api = (
+    three_day_api = (
         "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
     )
     response = requests.get(
-        seven_day_api,
+        three_day_api,
         auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
         verify=False,
     )
@@ -51,6 +51,57 @@ def retrieve_actual_data(api_date):
     return xml_dict["HourlySystemLoads"]["HourlySystemLoad"]
 
 
+def get_six_day():
+    d = datetime.date.today()
+    api_date = "{}{:02d}{:02d}".format(d.year, d.month, d.day)
+    six_day_api = "https://webservices.iso-ne.com/api/v1.1/sevendayforecast/day/{}".format(api_date)
+    response = requests.get(
+        six_day_api,
+        auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
+        verify=False,
+    )
+    xml_data = response.content
+    xml_dict = xmltodict.parse(xml_data)
+
+    parsed_dict = xml_dict["SevenDayForecasts"]["SevenDayForecast"]["MarketDay"]
+    peak_loads = []
+
+    for i in range(len(parsed_dict)):
+        peak_data = int(parsed_dict[i]["PeakLoadMw"])
+        peak_loads.append(peak_data)
+    
+    return peak_loads
+
+def create_bar_chart(threshold1, threshold2):
+    peak_loads = get_six_day()
+
+    day1 = datetime.date.today()
+    day2 = day1 + datetime.timedelta(days=1)
+    day3 = day1 + datetime.timedelta(days=2)
+    day4 = day1 + datetime.timedelta(days=3)
+    day5 = day1 + datetime.timedelta(days=4)
+    day6 = day1 + datetime.timedelta(days=5)
+
+    days = [
+        day1.strftime("%m/%d/%y"),
+        day2.strftime("%m/%d/%y"),
+        day3.strftime("%m/%d/%y"),
+        day4.strftime("%m/%d/%y"),
+        day5.strftime("%m/%d/%y"),
+        day6.strftime("%m/%d/%y"),
+    ]
+
+    plt.bar(days, peak_loads, color='#c4d79b')
+    # plt.grid(color='#95a5a6', linestyle='solid', linewidth=1, axis='y')
+    plt.title("Six Day Forecast")
+    plt.ylabel("MWH")
+    plt.axhline(y=threshold1, color='royalblue', lw=1.5, label="Historical Threshold")
+    plt.axhline(y=threshold2, color='orange', lw=1.5, label="Current Month Threshold")
+    plt.legend(loc='lower left', mode='expand', ncol= 3)
+    plt.savefig("./threeDay/figure3.png")
+    plt.close()
+
+
 def current_month_threshold():
     d = datetime.date.today()
     month_data = []
@@ -58,7 +109,7 @@ def current_month_threshold():
         api_date = "{}{:02d}{:02d}".format(d.year, d.month, day)
         api_data = retrieve_actual_data(api_date)
         day_peak = float(0)
-        for i in range(23):
+        for i in range(len(api_data)):
             day_data = float(api_data[i]["Load"])
             if day_data > day_peak:
                 day_peak = day_data
@@ -175,6 +226,7 @@ def create_line_chart(df, threshold_1, threshold_2):
     plt.ylabel("MWh")
     plt.title("Three Day Forecast")
     plt.savefig("./threeDay/figure.png")
+    plt.close()
 
 
 def create_pie_chart(data):
@@ -214,6 +266,7 @@ def create_pie_chart(data):
     plt.axis("equal")
     # plt.show()
     plt.savefig("./threeDay/figure2.png")
+    plt.close()
 
 
 def get_peak_data(data):
@@ -299,6 +352,7 @@ if __name__ == "__main__":
     pie_data.sort()
     pie_dict = {i: pie_data.count(i) for i in pie_data}
 
+    create_bar_chart(historical_threshold, monthly_threshold)
     create_pie_chart(pie_dict)
     create_line_chart(graph_df, historical_threshold, monthly_threshold)
 
@@ -310,7 +364,8 @@ if __name__ == "__main__":
     tomorrow = tomorrow.strftime("%m/%d/%y")
     third_day = third_day.strftime("%m/%d/%y")
 
-    rating, decision, color = alert_rating(peak_1, monthly_threshold)
+    rating, decision, color = alert_rating(peak_1, historical_threshold)
+
     body = """\
     <html>
    
@@ -394,6 +449,8 @@ if __name__ == "__main__":
         </div>
         <img style="float:left; width: 630px; height: 462px;" src="cid:image1">
         <div style="clear: both;"></div>
+
+        <img style="float:left; width: 630px; height: 462px;" src="cid:image3">
 
         <table style="width:100%; height: 500px;">
         <caption style="font-family: Verdana; font-size: 14px; text-align: left;">	
