@@ -2,12 +2,12 @@ from email.mime.image import MIMEImage
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email import encoders
 
 
-def send_mail(body):
+
+def send_alert(body):
     message = MIMEMultipart()
-    message["Subject"] = "Three Day Forecast"
+    message["Subject"] = "Load Alert"
     # message["From"] = "leldforecast@gmail.com"
     message["From"] = "dev923757@gmail.com"
     message["To"] = "dev923757@gmail.com"
@@ -17,27 +17,6 @@ def send_mail(body):
 
     msgAlternative = MIMEMultipart("alternative")
     message.attach(msgAlternative)
-
-    fp = open("./threeDay/figure.png", "rb")
-    msgImage = MIMEImage(fp.read())
-    fp.close()
-
-    msgImage.add_header("Content-ID", "<image1>")
-    message.attach(msgImage)
-
-    fp2 = open("./threeDay/figure2.png", "rb")
-    msgImage2 = MIMEImage(fp2.read())
-    fp2.close()
-
-    msgImage2.add_header("Content-ID", "<image2>")
-    message.attach(msgImage2)
-
-    fp3 = open("./threeDay/figure3.png", "rb")
-    msgImage3 = MIMEImage(fp3.read())
-    fp3.close()
-
-    msgImage3.add_header("Content-ID", "<image3>")
-    message.attach(msgImage3)
 
     msg_body = message.as_string()
 
