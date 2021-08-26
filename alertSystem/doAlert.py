@@ -5,11 +5,11 @@ from email.mime.multipart import MIMEMultipart
 
 
 
-def send_alert(body):
+def send_alert(body, subject):
     message = MIMEMultipart()
-    message["Subject"] = "Load Alert"
+    message["Subject"] = subject
     # message["From"] = "leldforecast@gmail.com"
-    message["From"] = "dev923757@gmail.com"
+    message["From"] = "leldforecast@gmail.com"
     message["To"] = "dev923757@gmail.com"
 
     body_content = body

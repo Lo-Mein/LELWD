@@ -71,4 +71,4 @@ if __name__ == "__main__":
             real_time_load,
             load_alert
         )
-        doAlert.send_alert(body)
+        doAlert.send_alert(body, "Load Alert")
