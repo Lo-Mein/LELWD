@@ -1,25 +1,16 @@
-from numpy.lib.function_base import diff
 import requests
+import pickle
 from requests.models import HTTPBasicAuth
 import pandas as pd
 import numpy as np
 import datetime
 import doMail
 import matplotlib.pyplot as plt
-import csv
-from itertools import chain
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import xmltodict
-
-
 from mongoConnect import get_monthly_historical_data
 
-
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-
-# Get the desired data from the api
-
 
 def retrieve_data():
     three_day_api = (
@@ -31,10 +22,7 @@ def retrieve_data():
         verify=False,
     )
     json_data = response.json()
-    demand_data = json_data[0]["data"]
-
-    return demand_data
-
+    return json_data[0]["data"]
 
 def retrieve_actual_data(api_date):
     actual_data_api = "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{}/location/32".format(
@@ -50,7 +38,6 @@ def retrieve_actual_data(api_date):
 
     return xml_dict["HourlySystemLoads"]["HourlySystemLoad"]
 
-
 def get_six_day():
     d = datetime.date.today()
     api_date = "{}{:02d}{:02d}".format(d.year, d.month, d.day)
@@ -64,77 +51,20 @@ def get_six_day():
     xml_dict = xmltodict.parse(xml_data)
 
     parsed_dict = xml_dict["SevenDayForecasts"]["SevenDayForecast"]["MarketDay"]
-    peak_loads = []
-
-    for i in range(len(parsed_dict)):
-        peak_data = int(parsed_dict[i]["PeakLoadMw"])
-        peak_loads.append(peak_data)
-    
-    return peak_loads
-
-def create_bar_chart(threshold1, threshold2):
-    peak_loads = get_six_day()
-
-    day1 = datetime.date.today()
-    day2 = day1 + datetime.timedelta(days=1)
-    day3 = day1 + datetime.timedelta(days=2)
-    day4 = day1 + datetime.timedelta(days=3)
-    day5 = day1 + datetime.timedelta(days=4)
-    day6 = day1 + datetime.timedelta(days=5)
-
-    days = [
-        day1.strftime("%m/%d/%y"),
-        day2.strftime("%m/%d/%y"),
-        day3.strftime("%m/%d/%y"),
-        day4.strftime("%m/%d/%y"),
-        day5.strftime("%m/%d/%y"),
-        day6.strftime("%m/%d/%y"),
-    ]
-
-    plt.bar(days, peak_loads, color='#c4d79b')
-    # plt.grid(color='#95a5a6', linestyle='solid', linewidth=1, axis='y')
-    plt.title("Six Day Forecast")
-    plt.ylabel("MWH")
-    plt.axhline(y=threshold1, color='royalblue', lw=1.5, label="Historical Threshold")
-    plt.axhline(y=threshold2, color='orange', lw=1.5, label="Current Month Threshold")
-    plt.legend(loc='lower left', mode='expand', ncol= 3)
-    plt.savefig("./threeDay/figure3.png")
-    plt.close()
-
-
-def current_month_threshold():
-    d = datetime.date.today()
-    month_data = []
-    for day in range(1, d.day):
-        api_date = "{}{:02d}{:02d}".format(d.year, d.month, day)
-        api_data = retrieve_actual_data(api_date)
-        day_peak = float(0)
-        for i in range(len(api_data)):
-            day_data = float(api_data[i]["Load"])
-            if day_data > day_peak:
-                day_peak = day_data
-        month_data.append(day_peak)
-    
-    if len(month_data) == 0:
-        return 0
-    
-    return round(max(month_data) * .97)
+    return [int(parsed_dict[i]["PeakLoadMw"]) for i in range(len(parsed_dict))]
 
 # Foramt the data in a way that each hour of each day displays the correct Mw
 def parse_data(data):
     days = ["day1", "day2", "day3"]
     graph_data = [[], [], []]
     table_data = [[], [], []]
-    i = 0
-    while i < len(days):
+    for i in range(len(days)):
         current = data[days[i]]
         for index in range(len(current)):
             graph_row = current[index]["Mw"]
             graph_data[i].append(graph_row)
             table_row = "{:,}".format(current[index]["Mw"])
             table_data[i].append(table_row)
-        i += 1
-
     return table_data, graph_data
 
 
@@ -237,19 +167,7 @@ def create_pie_chart(data):
         labels.append("Hour End " + str(x))
         sizes.append(y)
 
-    # hours_end = data[0]
-    # length = len(hours_end)
-    # middle_index = length // 3
-    # last_half = hours_end[:middle_index]
-    # pie_list = []
-    # for i in last_half:
-    #     i = float(i.replace(",", ""))
-    #     pie_list.append([i])
-    #     i += 1
-    # pie_list2 = list(chain.from_iterable(pie_list))
-
     colors = ["gold", "yellowgreen", "lightcoral", "lightskyblue"]
-    explode = (0, 0, 0, 0, 0, 0, 0, 0, 0)
     # Plot the data
     plt.pie(
         sizes,
@@ -264,10 +182,37 @@ def create_pie_chart(data):
     month = month.strftime("%B")
     plt.title(month + "'s Year Historical Peak Hour")
     plt.axis("equal")
-    # plt.show()
     plt.savefig("./threeDay/figure2.png")
     plt.close()
 
+def create_bar_chart(threshold1, threshold2):
+    peak_loads = get_six_day()
+
+    day1 = datetime.date.today()
+    day2 = day1 + datetime.timedelta(days=1)
+    day3 = day1 + datetime.timedelta(days=2)
+    day4 = day1 + datetime.timedelta(days=3)
+    day5 = day1 + datetime.timedelta(days=4)
+    day6 = day1 + datetime.timedelta(days=5)
+
+    days = [
+        day1.strftime("%m/%d/%y"),
+        day2.strftime("%m/%d/%y"),
+        day3.strftime("%m/%d/%y"),
+        day4.strftime("%m/%d/%y"),
+        day5.strftime("%m/%d/%y"),
+        day6.strftime("%m/%d/%y"),
+    ]
+
+    plt.bar(days, peak_loads, color='#c4d79b')
+    # plt.grid(color='#95a5a6', linestyle='solid', linewidth=1, axis='y')
+    plt.title("Six Day Forecast")
+    plt.ylabel("MWH")
+    plt.axhline(y=threshold1, color='royalblue', lw=1.5, label="Historical Threshold")
+    plt.axhline(y=threshold2, color='orange', lw=1.5, label="Current Month Threshold")
+    plt.legend(loc='lower left', mode='expand', ncol= 3)
+    plt.savefig("./threeDay/figure3.png")
+    plt.close()
 
 def get_peak_data(data):
 
@@ -281,22 +226,23 @@ def get_peak_data(data):
     return peak_1, peak_2, peak_3, hour_peak_1, hour_peak_2, hour_peak_3
 
 
-# rework function
-def save_as_csv(data):
+def current_month_threshold():
+    d = datetime.date.today()
+    month_data = []
+    for day in range(1, d.day):
+        api_date = "{}{:02d}{:02d}".format(d.year, d.month, day)
+        api_data = retrieve_actual_data(api_date)
+        day_peak = float(0)
+        for i in range(len(api_data)):
+            day_data = float(api_data[i]["Load"])
+            if day_data > day_peak:
+                day_peak = day_data
+        month_data.append(day_peak)
 
-    item_count = 0
+    if not month_data:
+        return 0
 
-    with open("test.csv", "w", newline="") as csvfile:
-        column_names = ["HourEnd", "Mw"]
-
-        the_writer = csv.DictWriter(csvfile, fieldnames=column_names)
-
-        the_writer.writeheader()
-
-        for item in data:
-            item_count += 1
-            the_writer.writerow({"Day": item_count, "Mw": item})
-
+    return round(max(month_data) * .97)
 
 def alert_rating(peak, threshold):
     if threshold == 0:
@@ -311,32 +257,39 @@ def alert_rating(peak, threshold):
         decision = "No"
         rating = 0
         color = '#c4d79b'
-    elif difference >= -1000 and difference <= -500:
+    elif difference <= -500:
         decision = "No"
         rating = 1
         color = '#d8e4bc'
-    elif difference > -500 and difference <= 0:
+    elif difference <= 0:
         decision = "No"
         rating = 2
         color = '#ebf1de'
-    elif difference > 0 and difference <= 500:
+    elif difference <= 500:
         decision = "Yes"
         rating = 3
         color = '#f2dcdb'
-    elif difference > 500 and difference <= 1000:
+    elif difference <= 1000:
         decision = "Yes"
         rating = 4
         color = '#e6b8b7'
-    elif difference > 1000:
+    else:
         decision = "Yes"
         rating = 5
         color = '#da9694'
 
     return rating, decision, color
 
+# sourcery skip: ensure-file-closed
 if __name__ == "__main__":
     data = retrieve_data()
     table_data, graph_data = parse_data(data)
+
+    file_name = "../alertSystem/forecast.pkl"
+    open_file = open(file_name, "wb")
+    pickle.dump(graph_data[0], open_file)
+    open_file.close()
+
 
     table_df = format_data(table_data)
     graph_df = format_data(graph_data)

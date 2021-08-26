@@ -2,15 +2,15 @@ from email.mime.image import MIMEImage
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email import encoders
+
 
 
 def send_mail(body):
     message = MIMEMultipart()
     message["Subject"] = "Three Day Forecast"
     # message["From"] = "leldforecast@gmail.com"
-    message["From"] = "dev923757@gmail.com"
-    message["To"] = "dev923757@gmail.com"
+    message["From"] = "leldforecast@gmail.com"
+    message["To"] = "peakalert@lelwd.com"
 
     body_content = body
     message.attach(MIMEText(body_content, "html"))
