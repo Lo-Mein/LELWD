@@ -12,6 +12,7 @@ from mongoConnect import get_monthly_historical_data
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+
 def retrieve_data():
     three_day_api = (
         "https://www.iso-ne.com/ws/wsclient?_ns_requestType=threedayforecast"
@@ -23,6 +24,7 @@ def retrieve_data():
     )
     json_data = response.json()
     return json_data[0]["data"]
+
 
 def retrieve_actual_data(api_date):
     actual_data_api = "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{}/location/32".format(
@@ -38,10 +40,12 @@ def retrieve_actual_data(api_date):
 
     return xml_dict["HourlySystemLoads"]["HourlySystemLoad"]
 
+
 def get_six_day():
     d = datetime.date.today()
     api_date = "{}{:02d}{:02d}".format(d.year, d.month, d.day)
-    six_day_api = "https://webservices.iso-ne.com/api/v1.1/sevendayforecast/day/{}".format(api_date)
+    six_day_api = "https://webservices.iso-ne.com/api/v1.1/sevendayforecast/day/{}".format(
+        api_date)
     response = requests.get(
         six_day_api,
         auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
@@ -54,6 +58,8 @@ def get_six_day():
     return [int(parsed_dict[i]["PeakLoadMw"]) for i in range(len(parsed_dict))]
 
 # Foramt the data in a way that each hour of each day displays the correct Mw
+
+
 def parse_data(data):
     days = ["day1", "day2", "day3"]
     graph_data = [[], [], []]
@@ -106,10 +112,6 @@ def format_data(data):
             22,
             23,
             24
-            # 'Hour 01', 'Hour 02', 'Hour 03', 'Hour 04', 'Hour 05', 'Hour 06',
-            # 'Hour 07', 'Hour 08', 'Hour 09', 'Hour 10', 'Hour 11', 'Hour 12',
-            # 'Hour 13', 'Hour 14', 'Hour 15', 'Hour 16', 'Hour 17', 'Hour 18',
-            # 'Hour 19', 'Hour 20', 'Hour 21', 'Hour 22', 'Hour 23', 'Hour 24'
         ],
         index=[days],
     )
@@ -149,13 +151,13 @@ def create_line_chart(df, threshold_1, threshold_2):
             24,
         ]
     )
-    plt.legend(title= "Days", loc= 3)
+    plt.legend(title="Days", loc=3)
     plt.axhline(y=threshold_1, color='red')
     plt.axhline(y=threshold_2, color='black')
     plt.xlabel("Hour End")
     plt.ylabel("MWh")
     plt.title("Three Day Forecast")
-    plt.savefig("./threeDay/figure.png")
+    plt.savefig("figure.png")
     plt.close()
 
 
@@ -182,8 +184,9 @@ def create_pie_chart(data):
     month = month.strftime("%B")
     plt.title(month + "'s Year Historical Peak Hour")
     plt.axis("equal")
-    plt.savefig("./threeDay/figure2.png")
+    plt.savefig("figure2.png")
     plt.close()
+
 
 def create_bar_chart(threshold1, threshold2):
     peak_loads = get_six_day()
@@ -208,11 +211,14 @@ def create_bar_chart(threshold1, threshold2):
     # plt.grid(color='#95a5a6', linestyle='solid', linewidth=1, axis='y')
     plt.title("Six Day Forecast")
     plt.ylabel("MWH")
-    plt.axhline(y=threshold1, color='royalblue', lw=1.5, label="Historical Threshold")
-    plt.axhline(y=threshold2, color='orange', lw=1.5, label="Current Month Threshold")
-    plt.legend(loc='lower left', mode='expand', ncol= 3)
-    plt.savefig("./threeDay/figure3.png")
+    plt.axhline(y=threshold1, color='royalblue',
+                lw=1.5, label="Historical Threshold")
+    plt.axhline(y=threshold2, color='orange', lw=1.5,
+                label="Current Month Threshold")
+    plt.legend(loc='lower left', mode='expand', ncol=3)
+    plt.savefig("figure3.png")
     plt.close()
+
 
 def get_peak_data(data):
 
@@ -243,6 +249,7 @@ def current_month_threshold():
         return 0
 
     return round(max(month_data) * .97)
+
 
 def alert_rating(peak, threshold):
     if threshold == 0:
@@ -280,6 +287,7 @@ def alert_rating(peak, threshold):
 
     return rating, decision, color
 
+
 # sourcery skip: ensure-file-closed
 if __name__ == "__main__":
     data = retrieve_data()
@@ -289,7 +297,6 @@ if __name__ == "__main__":
     open_file = open(file_name, "wb")
     pickle.dump(graph_data[0], open_file)
     open_file.close()
-
 
     table_df = format_data(table_data)
     graph_df = format_data(graph_data)
@@ -301,6 +308,11 @@ if __name__ == "__main__":
     pie_data, threshold = get_monthly_historical_data()
     historical_threshold = np.percentile(threshold, 75)
     monthly_threshold = current_month_threshold()
+
+    if historical_threshold > monthly_threshold:
+        alert_threshold = historical_threshold
+    else:
+        alert_threshold = monthly_threshold
 
     pie_data.sort()
     pie_dict = {i: pie_data.count(i) for i in pie_data}
@@ -317,7 +329,7 @@ if __name__ == "__main__":
     tomorrow = tomorrow.strftime("%m/%d/%y")
     third_day = third_day.strftime("%m/%d/%y")
 
-    rating, decision, color = alert_rating(peak_1, historical_threshold)
+    rating, decision, color = alert_rating(peak_1, alert_threshold)
 
     body = """\
     <html>
@@ -464,6 +476,6 @@ if __name__ == "__main__":
         tomorrow,
         third_day,
         color
-        
+
     )
     doMail.send_mail(body)
