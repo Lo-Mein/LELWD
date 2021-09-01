@@ -2,6 +2,23 @@ from email.mime.image import MIMEImage
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from twilio.rest import Client
+
+
+def send_textmessage_alert(alert=""):
+    cellphone = 18452422392
+    twilio_number = 17068105899
+    account = "AC062ffd139b27fde112c817fc516f4400"
+    token = "ea1d8ac0722635391dd7f35cf8d1adb1"
+
+    client = Client(account, token)
+
+    client.messages.create(
+        to=cellphone,
+        from_=twilio_number,
+        body=alert,
+        # media_url=["https://demo.twilio.com/owl.png"],
+    )
 
 
 def send_alert(body, subject):

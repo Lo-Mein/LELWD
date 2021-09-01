@@ -20,6 +20,7 @@ def retrieve_data():
     json_data = response.json()
     return json_data[0]["data"]
 
+
 def parse_data(data):
     days = ["day1", "day2", "day3"]
     graph_data = [[], [], []]
@@ -35,13 +36,17 @@ if __name__ == "__main__":
     file_name = "forecast.pkl"
     with open(file_name, "rb") as open_file:
         loaded_forecast = pickle.load(open_file)
-    #Load the current forecast
+    # Load the current forecast
     data = retrieve_data()
     parsed_data = parse_data(data)
     updated_forecast = parsed_data[0]
 
-    #Check whether the forecast has been changed
-    if functools.reduce(lambda x, y : x and y, map(lambda p, q: p != q,loaded_forecast,updated_forecast), True): 
+    # Check whether the forecast has been changed
+    if functools.reduce(
+        lambda x, y: x and y,
+        map(lambda p, q: p != q, loaded_forecast, updated_forecast),
+        True,
+    ):
         with open(file_name, "wb") as open_file:
             pickle.dump(parsed_data[0], open_file)
         body = """\
@@ -58,7 +63,7 @@ if __name__ == "__main__":
             </body>
         </html>
         """
-        doAlert.send_alert(body, "Forecast Update")
-
-    
-        
+        # doAlert.send_alert(body, "Forecast Update")
+    doAlert.send_textmessage_alert(
+        "Today's Forecast has changed. Check out the new forecast below at this link: https://www.iso-ne.com/markets-operations/system-forecast-status/three-day-system-demand-forecast"
+    )

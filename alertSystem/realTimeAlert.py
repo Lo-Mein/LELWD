@@ -10,7 +10,9 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 def get_real_time_load():
-    real_time_api = "https://webservices.iso-ne.com/api/v1.1/fiveminutesystemload/current"
+    real_time_api = (
+        "https://webservices.iso-ne.com/api/v1.1/fiveminutesystemload/current"
+    )
     response = requests.get(
         real_time_api,
         auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
@@ -26,8 +28,11 @@ def get_real_time_load():
 def get_forecast_load():
     d = datetime.date.today()
     api_date = "{}{:02d}{:02d}".format(d.year, d.month, d.day)
-    forecast_api = "https://webservices.iso-ne.com/api/v1.1/hourlyloadforecast/day/{}".format(
-        api_date)
+    forecast_api = (
+        "https://webservices.iso-ne.com/api/v1.1/hourlyloadforecast/day/{}".format(
+            api_date
+        )
+    )
     response = requests.get(
         forecast_api,
         auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
@@ -56,7 +61,7 @@ if __name__ == "__main__":
 
     alert = send_alert(real_time_load, forecasted_load)
 
-    if alert:
+    if True:
         load_alert = real_time_load - forecasted_load
         body = """\
         <html>
@@ -71,7 +76,10 @@ if __name__ == "__main__":
             </body>
         </html>
         """.format(
-            real_time_load,
-            load_alert
+            real_time_load, load_alert
         )
-        doAlert.send_alert(body, "Load Alert")
+        result_load = "The current load: {0}. Exceeding the forecast by: {1}".format(
+            real_time_load, load_alert
+        )
+        # doAlert.send_alert(body, "Load Alert")
+        doAlert.send_textmessage_alert(result_load)
