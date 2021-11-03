@@ -63,7 +63,7 @@ if __name__ == "__main__":
             </body>
         </html>
         """
-        # doAlert.send_alert(body, "Forecast Update")
-    doAlert.send_textmessage_alert(
-        "Today's Forecast has changed. Check out the new forecast below at this link: https://www.iso-ne.com/markets-operations/system-forecast-status/three-day-system-demand-forecast"
-    )
+        doAlert.send_alert(body, "Forecast Update")
+        doAlert.send_textmessage_alert(
+            "Today's Forecast has changed. Check out the new forecast below at this link: https://www.iso-ne.com/markets-operations/system-forecast-status/three-day-system-demand-forecast"
+        )

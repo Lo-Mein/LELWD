@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     alert = send_alert(real_time_load, forecasted_load)
 
-    if True:
+    if alert:
         load_alert = real_time_load - forecasted_load
         body = """\
         <html>
@@ -81,5 +81,5 @@ if __name__ == "__main__":
         result_load = "The current load: {0}. Exceeding the forecast by: {1}".format(
             real_time_load, load_alert
         )
-        # doAlert.send_alert(body, "Load Alert")
+        doAlert.send_alert(body, "Load Alert")
         doAlert.send_textmessage_alert(result_load)

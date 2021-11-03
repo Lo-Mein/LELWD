@@ -6,7 +6,7 @@ from twilio.rest import Client
 
 
 def send_textmessage_alert(alert=""):
-    cellphone = 18452422392
+    cellphone = 15085232490
     twilio_number = 17068105899
     account = "AC062ffd139b27fde112c817fc516f4400"
     token = "ea1d8ac0722635391dd7f35cf8d1adb1"
