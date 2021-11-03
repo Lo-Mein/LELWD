@@ -135,6 +135,7 @@ def get2020Data():
 
 def get_monthly_historical_data():
     month = datetime.datetime.now().month
+    month_string = datetime.datetime.now().strftime('%b')
     days = monthrange(2019,month)[1]
     max_hour = []
     max_peak = []
@@ -142,7 +143,7 @@ def get_monthly_historical_data():
     year_data = [db.hourly_2015_demand, db.hourly_2016_demand, db.hourly_2017_demand, db.hourly_2018_demand, db.hourly_2019_demand, db.hourly_2020_demand]
     for data in year_data:
         for day in range(1, days+1):
-            demand_list = data.find({'Date': datetime.datetime(year, month, day, 4, 0)})
+            demand_list = data.find({'Date': "{0}-{1}-{2}".format(day, month_string, str(year)[-2:])})
             daily_peak = 0
             for item in demand_list:
                 if item['RT_Demand'] > daily_peak:
@@ -155,6 +156,6 @@ def get_monthly_historical_data():
 
 
 if __name__ == "__main__":
-    pie_data = pie_chart_data()
-    pie_dict = {i: pie_data.count(i) for i in pie_data}
-    print(pie_dict)
+    max_hour, max_peak = get_monthly_historical_data()
+
+    print(max_peak)

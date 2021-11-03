@@ -309,11 +309,7 @@ if __name__ == "__main__":
     historical_threshold = np.percentile(threshold, 75)
     monthly_threshold = current_month_threshold()
 
-    if historical_threshold > monthly_threshold:
-        alert_threshold = historical_threshold
-    else:
-        alert_threshold = monthly_threshold
-
+    alert_threshold = max(historical_threshold, monthly_threshold)
     pie_data.sort()
     pie_dict = {i: pie_data.count(i) for i in pie_data}
 

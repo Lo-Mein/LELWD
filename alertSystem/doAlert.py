@@ -9,7 +9,7 @@ def send_textmessage_alert(alert=""):
     cellphone = 15085232490
     twilio_number = 17068105899
     account = "AC062ffd139b27fde112c817fc516f4400"
-    token = "ea1d8ac0722635391dd7f35cf8d1adb1"
+    token = "f2e8218c33cd7c37354c9b4cb7892607"
 
     client = Client(account, token)
 
