@@ -171,8 +171,12 @@ def update_current_month_threshold(threshold):
     data = db.current_month_threshold
     data.update_one({}, {"$set": {"current_month_threshold": threshold}})
 
+def get_current_month_threshold():
+    data = db.current_month_threshold
+    return data.find_one()["current_month_threshold"]
+
 
 if __name__ == "__main__":
     # max_hour, max_peak = get_monthly_historical_data()
 
-    update_current_month_threshold(18049)
+    print(get_current_month_threshold())

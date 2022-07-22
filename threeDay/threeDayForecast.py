@@ -245,10 +245,8 @@ def current_month_threshold():
                 day_peak = day_data
         month_data.append(day_peak)
 
-    if not month_data:
-        return 0
+    current_threshold = round(max(month_data) * 0.97) if month_data else mongo.get_current_month_threshold
 
-    current_threshold = round(max(month_data) * .97)
     mongo.update_current_month_threshold(current_threshold)
 
     return current_threshold
