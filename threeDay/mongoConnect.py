@@ -4,15 +4,15 @@ from flask_cors import CORS
 import datetime
 from calendar import monthrange
 import numpy as np
-# from threeDayForecast import retrieve_actual_data
 
 
-connection_url = "mongodb+srv://RyanMatt:JeffKramer1@historicaldata.2fqkr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+
+connection_url = "mongodb+srv://admin:4z9gadc6vGKvc1TN@lelwd-generator-applica.141qu.mongodb.net/?retryWrites=true&w=majority"
 app = Flask(__name__)
 client = pymongo.MongoClient(connection_url)
 
 # Database
-db = client.get_database("lelwd")
+db = client.get_database("historical-data")
 
 
 # Assign a variable to every differnt collection
@@ -28,8 +28,8 @@ hourly_2019_demand = db.hourly_2019_demand
 
 hourly_2020_demand = db.hourly_2020_demand
 
+hourly_2021_demand = db.hourly_2021_demand
 
-count = hourly_2015_demand.count_documents({})
 
 
 # To insert a single document into the database,
@@ -131,6 +131,19 @@ def get2020Data():
         max_data[daily_peak] = hr_end
         return max_data
 
+def get2021Data():
+    max_data = dict()
+    data = db.hourly_2021_demand
+    for day in range(1, days + 1):
+        demand_list = data.find({"Date": datetime.datetime(2021, month, day, 4, 0)})
+        daily_peak = 0
+        for item in demand_list:
+            if item["RT_Demand"] > daily_peak:
+                daily_peak = item["RT_Demand"]
+                hr_end = item["Hr_end"]
+        max_data[daily_peak] = hr_end
+        return max_data
+
 
 
 def get_monthly_historical_data():
@@ -140,7 +153,7 @@ def get_monthly_historical_data():
     max_hour = []
     max_peak = []
     year = 2015
-    year_data = [db.hourly_2015_demand, db.hourly_2016_demand, db.hourly_2017_demand, db.hourly_2018_demand, db.hourly_2019_demand, db.hourly_2020_demand]
+    year_data = [db.hourly_2015_demand, db.hourly_2016_demand, db.hourly_2017_demand, db.hourly_2018_demand, db.hourly_2019_demand, db.hourly_2020_demand, db.hourly_2021_demand]
     for data in year_data:
         for day in range(1, days+1):
             demand_list = data.find({'Date': "{0}-{1}-{2}".format(day, month_string, str(year)[-2:])})
@@ -154,8 +167,12 @@ def get_monthly_historical_data():
         year += 1
     return max_hour, max_peak
 
+def update_current_month_threshold(threshold):
+    data = db.current_month_threshold
+    data.update_one({}, {"$set": {"current_month_threshold": threshold}})
+
 
 if __name__ == "__main__":
-    max_hour, max_peak = get_monthly_historical_data()
+    # max_hour, max_peak = get_monthly_historical_data()
 
-    print(max_peak)
+    update_current_month_threshold(18049)

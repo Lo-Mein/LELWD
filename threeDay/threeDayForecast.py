@@ -8,7 +8,7 @@ import doMail
 import matplotlib.pyplot as plt
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import xmltodict
-from mongoConnect import get_monthly_historical_data
+import mongoConnect as mongo
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -27,9 +27,8 @@ def retrieve_data():
 
 
 def retrieve_actual_data(api_date):
-    actual_data_api = "https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{}/location/32".format(
-        api_date
-    )
+    actual_data_api = f"https://webservices.iso-ne.com/api/v1.1/hourlysysload/day/{api_date}/location/32"
+
     response = requests.get(
         actual_data_api,
         auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
@@ -44,8 +43,8 @@ def retrieve_actual_data(api_date):
 def get_six_day():
     d = datetime.date.today()
     api_date = "{}{:02d}{:02d}".format(d.year, d.month, d.day)
-    six_day_api = "https://webservices.iso-ne.com/api/v1.1/sevendayforecast/day/{}".format(
-        api_date)
+    six_day_api = f"https://webservices.iso-ne.com/api/v1.1/sevendayforecast/day/{api_date}"
+
     response = requests.get(
         six_day_api,
         auth=HTTPBasicAuth("info.rmsolutionss@gmail.com", "JeffKramer1"),
@@ -67,10 +66,11 @@ def parse_data(data):
     for i in range(len(days)):
         current = data[days[i]]
         for index in range(len(current)):
-            graph_row = current[index]["Mw"]
-            graph_data[i].append(graph_row)
-            table_row = "{:,}".format(current[index]["Mw"])
-            table_data[i].append(table_row)
+            if current[index]["HourEnd"] != "02X":
+                graph_row = current[index]["Mw"]
+                graph_data[i].append(graph_row)
+                table_row = "{:,}".format(current[index]["Mw"])
+                table_data[i].append(table_row)
     return table_data, graph_data
 
 
@@ -248,7 +248,10 @@ def current_month_threshold():
     if not month_data:
         return 0
 
-    return round(max(month_data) * .97)
+    current_threshold = round(max(month_data) * .97)
+    mongo.update_current_month_threshold(current_threshold)
+
+    return current_threshold
 
 
 def alert_rating(peak, threshold):
@@ -305,7 +308,7 @@ if __name__ == "__main__":
         graph_data
     )
 
-    pie_data, threshold = get_monthly_historical_data()
+    pie_data, threshold = mongo.get_monthly_historical_data()
     historical_threshold = np.percentile(threshold, 75)
     monthly_threshold = current_month_threshold()
 
